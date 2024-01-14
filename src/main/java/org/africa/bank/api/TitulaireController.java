@@ -22,34 +22,40 @@ public class TitulaireController {
         this.titulaireDao = titulaireDao;
     }
 
-    /**
-     * New Tiers.
-     * Initialisation
-     * @param model
-     * @return
-     */
-    @RequestMapping("tier/new")
-    public String newTiers(Model model) {
-        model.addAttribute("tier", new Tiers());
-        return "tierform";
-    }
 
     /**
      * Save tiers to database.
      *
-     * @param tiers
+     * @param
      * @return
      */
-    @RequestMapping(value = "tier", method = RequestMethod.POST)
-    public String saveTier(Tiers tiers) {
-        titulaireDao.saveTier(tiers);
-        return "redirect:/tier/" + tiers.getId();
+
+    @PostMapping
+    public Tiers createTiers(@RequestBody Tiers tiers) {
+        return titulaireRepository.save(tiers);
+    }
+
+    /**
+     * get titular bay his id
+     *
+     * @param
+     * @return
+     */
+
+    @GetMapping("/{id}")
+    public Tiers getTiersById(@PathVariable Long id) {
+        return titulaireRepository.findById(id).orElse(null);
     }
 
     @GetMapping("/edit/{id}")
     public String edit(@PathVariable Long id, Model model) {
         model.addAttribute("product", titulaireDao.getTiersById(id));
         return "tierform";
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteTiers(@PathVariable Long id) {
+        titulaireRepository.deleteById(id);
     }
 
 

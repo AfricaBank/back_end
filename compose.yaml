@@ -1,24 +1,27 @@
+version: '3'
 services:
-  postgres:
-    container_name: postgres
-    image: 'postgres:latest'
-    networks:
-      - db_network
-    restart: unless-stopped
-    ports:
-      - '127.0.0.1:5432:5432'
-    volumes:
-      - ./docker_volumes/postgres_13:/var/lib/postgresql/data
+  africa-bank-db:
+    image: postgres:latest
+    container_name: africa-bank-db
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-    pgadmin:
-      image: dpage/pgadmin4
-      restart: unless-stopped
-      networks:
-        - db_network
-      environment:
-        PGADMIN_DEFAULT_EMAIL: admin@admin.com
-        PGADMIN_DEFAULT_PASSWORD: admin
-      ports:
-        - '127.0.0.1:5050:80'
+      POSTGRES_DB: africaBank
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: diagaraf
+    ports:
+      - "5432:5432"
+    networks:
+      - africa-bank-network
+
+  africa-bank-app:
+    image: back_end
+    container_name: africa-bank-app
+    ports:
+      - "8585:8585"
+    depends_on:
+      - africa-bank-db
+    networks:
+      - africa-bank-network
+
+networks:
+  africa-bank-network:
+    driver: bridge
