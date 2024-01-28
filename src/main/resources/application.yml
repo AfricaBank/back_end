@@ -8,7 +8,7 @@ spring:
     driverClassName: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/africaBank
     username: postgres
-    password: passwordDB
+    password:
   jpa:
     hibernate:
       ddl-auto: update
