@@ -2,25 +2,19 @@ package org.africa.bank.api;
 
 import org.africa.bank.dao.entity.Tiers;
 import org.africa.bank.dao.repository.TitulaireRepository;
-import org.africa.bank.dao.service.TitulaireDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @Controller
 @RequestMapping("/tiers")
 public class TitulaireController {
 
-    private final TitulaireDao titulaireDao;
     @Autowired
     private TitulaireRepository titulaireRepository;
-
-
-    public TitulaireController(TitulaireDao titulaireDao) {
-        this.titulaireDao = titulaireDao;
-    }
 
 
     /**
@@ -35,6 +29,11 @@ public class TitulaireController {
         return titulaireRepository.save(tiers);
     }
 
+    @GetMapping
+    public List<Tiers> getAllTiers() {
+        return titulaireRepository.findAll();
+    }
+
     /**
      * get titular bay his id
      *
@@ -47,10 +46,10 @@ public class TitulaireController {
         return titulaireRepository.findById(id).orElse(null);
     }
 
-    @GetMapping("/edit/{id}")
-    public String edit(@PathVariable Long id, Model model) {
-        model.addAttribute("product", titulaireDao.getTiersById(id));
-        return "tierform";
+    @PutMapping("/{id}")
+    public Tiers updateTiers(@PathVariable Long id, @RequestBody Tiers updatedTiers) {
+        updatedTiers.setId(id);
+        return titulaireRepository.save(updatedTiers);
     }
 
     @DeleteMapping("/{id}")

@@ -5,7 +5,4 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TitulaireRepository extends JpaRepository<Tiers, Long> {
 
-    boolean existsById(Long id);
-
-    boolean existsByNom(String nom);
 }
