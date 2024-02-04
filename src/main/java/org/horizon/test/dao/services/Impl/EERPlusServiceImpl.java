@@ -1,7 +1,9 @@
 package org.horizon.test.dao.services.Impl;
 
 import lombok.AllArgsConstructor;
+import org.horizon.test.dao.entities.Dossier;
 import org.horizon.test.dao.entities.EERPlus;
+import org.horizon.test.dao.repositories.DossierRepository;
 import org.horizon.test.dao.repositories.EERPlusRepository;
 import org.horizon.test.dao.services.EERPlusService;
 import org.springframework.data.domain.Page;
@@ -13,9 +15,11 @@ import org.springframework.stereotype.Service;
 public class EERPlusServiceImpl implements EERPlusService {
 
     private EERPlusRepository eerPlusRepository;
+    private DossierRepository dossierRepository;
+
     @Override
-    public Page<EERPlus> getAllEERPluss(String motifEERPlus, int page, int size) {
-        return eerPlusRepository.findEERPlusByMotifEERContains(motifEERPlus, PageRequest.of(page, size));
+    public Page<EERPlus> getAllEERPluss(int page, int size) {
+        return eerPlusRepository.findAll(PageRequest.of(page, size));
     }
 
     @Override
@@ -24,7 +28,9 @@ public class EERPlusServiceImpl implements EERPlusService {
     }
 
     @Override
-    public EERPlus addEERPlus(EERPlus eer) {
+    public EERPlus addEERPlus(Long idDossier, EERPlus eer) {
+        Dossier dossier = dossierRepository.findById(idDossier).orElse(null);
+        eer.setDossier(dossier);
         return eerPlusRepository.save(eer);
     }
 

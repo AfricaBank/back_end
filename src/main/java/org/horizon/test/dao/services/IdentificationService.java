@@ -7,11 +7,11 @@ import org.springframework.stereotype.Service;
 @Service
 public interface IdentificationService {
 
-    Page<Identification> getAllIdentifications(String raisonSociale, int page, int size);
+    Page<Identification> getAllIdentifications(int page, int size);
 
     Identification getIdentification(Long idIdentification);
 
-    Identification addIdentification( Identification identification);
+    Identification addIdentification( Long idDossier, Identification identification);
 
     Identification updateIdentification(Identification identification);
 

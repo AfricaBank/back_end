@@ -10,5 +10,4 @@ import java.math.BigInteger;
 
 @Repository
 public interface CoordonneeRepository extends JpaRepository<Coordonnee, Long> {
-    Page<Coordonnee> findCoordonneesByTelFixeContains(BigInteger telFixe, Pageable pageable);
 }

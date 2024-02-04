@@ -1,7 +1,9 @@
 package org.horizon.test.dao.services.Impl;
 
 import lombok.AllArgsConstructor;
+import org.horizon.test.dao.entities.Dossier;
 import org.horizon.test.dao.entities.EER;
+import org.horizon.test.dao.repositories.DossierRepository;
 import org.horizon.test.dao.repositories.EERRepository;
 import org.horizon.test.dao.services.EERService;
 import org.springframework.data.domain.Page;
@@ -13,9 +15,11 @@ import org.springframework.stereotype.Service;
 public class EERServiceImpl implements EERService {
 
     private EERRepository eerRepository;
+    private DossierRepository dossierRepository;
+
     @Override
-    public Page<EER> getAllEERs(String motifEER, int page, int size) {
-        return eerRepository.findEERByMotifEERContains(motifEER, PageRequest.of(page, size));
+    public Page<EER> getAllEERs(int page, int size) {
+        return eerRepository.findAll(PageRequest.of(page, size));
     }
 
     @Override
@@ -24,7 +28,9 @@ public class EERServiceImpl implements EERService {
     }
 
     @Override
-    public EER addEER(EER eer) {
+    public EER addEER(Long idDossier, EER eer) {
+        Dossier dossier = dossierRepository.findById(idDossier).orElse(null);
+        eer.setDossier(dossier);
         return eerRepository.save(eer);
     }
 

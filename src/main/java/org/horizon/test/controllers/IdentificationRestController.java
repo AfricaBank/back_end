@@ -22,8 +22,8 @@ public class IdentificationRestController {
     private IdentificationServiceImpl identificationService;
 
     @GetMapping("/identifications/list")
-    public ResponseEntity<Page<Identification>> getAllIdentifications(String nom, int page, int size) {
-        return ResponseEntity.ok(identificationService.getAllIdentifications(nom, page, size));
+    public ResponseEntity<Page<Identification>> getAllIdentifications(int page, int size) {
+        return ResponseEntity.ok(identificationService.getAllIdentifications(page, size));
     }
 
     @GetMapping("/identifications/{idIdentification}")
@@ -32,10 +32,10 @@ public class IdentificationRestController {
     }
 
     @PostMapping("/identifications/add")
-    public ResponseEntity<?> addIdentification(@Valid @RequestBody Identification identification, BindingResult bindingResult) {
+    public ResponseEntity<?> addIdentification( Long idDossier, @Valid @RequestBody Identification identification, BindingResult bindingResult) {
         ResponseEntity<List<String>> BAD_REQUEST = getErrors(bindingResult);
         if (BAD_REQUEST != null) return BAD_REQUEST;
-        return ResponseEntity.ok(identificationService.addIdentification(identification));
+        return ResponseEntity.ok(identificationService.addIdentification(idDossier, identification));
 
     }
 

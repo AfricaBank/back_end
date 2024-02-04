@@ -24,7 +24,7 @@ public class Coordonnee {
 
     @NotNull
     @Digits( integer = 20, fraction = 0)
-    private BigInteger telFixe;
+    private String telFixe;
 
     @Size(max = 20)
     @Email
@@ -39,5 +39,6 @@ public class Coordonnee {
 
     @OneToOne
     @JoinColumn(name = "idDossier")
+    @JsonIgnore
     private Dossier dossier;
 }

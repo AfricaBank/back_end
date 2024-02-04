@@ -7,11 +7,11 @@ import org.springframework.stereotype.Service;
 @Service
 public interface EERService {
 
-    Page<EER> getAllEERs(String motifEER, int page, int size);
+    Page<EER> getAllEERs(int page, int size);
 
     EER getEER(Long idEER);
 
-    EER addEER( EER eer);
+    EER addEER( Long idDossier, EER eer);
 
     EER updateEER(EER eer);
 

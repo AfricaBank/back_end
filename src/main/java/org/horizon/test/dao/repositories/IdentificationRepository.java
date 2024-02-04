@@ -8,5 +8,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface IdentificationRepository extends JpaRepository<Identification, Long> {
-    Page<Identification> findIdentificationsByRaisonSocialeContains(String raisonSociale, Pageable pageable);
 }

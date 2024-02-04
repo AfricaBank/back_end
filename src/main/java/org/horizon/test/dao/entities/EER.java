@@ -38,6 +38,7 @@ public class EER  implements Serializable {
 
     @OneToOne
     @JoinColumn(name = "idDossier")
+    @JsonIgnore
     private Dossier dossier;
 
 }

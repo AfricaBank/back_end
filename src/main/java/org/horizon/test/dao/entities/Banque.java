@@ -1,5 +1,6 @@
 package org.horizon.test.dao.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
@@ -20,7 +21,7 @@ public class Banque {
     private Long idBanque;
 
     @NotNull
-    private UUID idNational;
+    private String idNational;
 
     @NotNull
     @Digits(fraction = 0, integer = 5)
@@ -34,6 +35,7 @@ public class Banque {
 
     @OneToOne
     @JoinColumn(name = "idDossier")
+    @JsonIgnore
     private Dossier dossier;
 
 }

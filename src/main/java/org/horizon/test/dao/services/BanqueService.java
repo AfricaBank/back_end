@@ -7,11 +7,11 @@ import org.springframework.stereotype.Service;
 @Service
 public interface BanqueService {
 
-    Page<Banque> getAllBanques(Integer nom, int page, int size);
+    Page<Banque> getAllBanques(int page, int size);
 
     Banque getBanque(Long idBanque);
 
-    Banque addBanque( Banque banque);
+    Banque addBanque(Long idDossier, Banque banque);
 
     Banque updateBanque(Banque banque);
 

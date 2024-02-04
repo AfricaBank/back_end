@@ -8,5 +8,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface EERPlusRepository extends JpaRepository<EERPlus, Long> {
-    Page<EERPlus> findEERPlusByMotifEERContains(String motif, Pageable pageable);
 }

@@ -23,8 +23,8 @@ public class CoordonneeRestController {
     private CoordonneeServiceImpl coordonneeService;
 
     @GetMapping("/coordonnees/list")
-    public ResponseEntity<Page<Coordonnee>> getAllCoordonnees(BigInteger telFixe, int page, int size) {
-        return ResponseEntity.ok(coordonneeService.getAllCoordonnees(telFixe, page, size));
+    public ResponseEntity<Page<Coordonnee>> getAllCoordonnees(int page, int size) {
+        return ResponseEntity.ok(coordonneeService.getAllCoordonnees(page, size));
     }
 
     @GetMapping("/coordonnees/{idCoordonnee}")
@@ -33,10 +33,10 @@ public class CoordonneeRestController {
     }
 
     @PostMapping("/coordonnees/add")
-    public ResponseEntity<?> addCoordonnee(@Valid @RequestBody Coordonnee coordonnee, BindingResult bindingResult) {
+    public ResponseEntity<?> addCoordonnee( Long idDossier, @Valid @RequestBody Coordonnee coordonnee, BindingResult bindingResult) {
         ResponseEntity<List<String>> BAD_REQUEST = getErrors(bindingResult);
         if (BAD_REQUEST != null) return BAD_REQUEST;
-        return ResponseEntity.ok(coordonneeService.addCoordonnee(coordonnee));
+        return ResponseEntity.ok(coordonneeService.addCoordonnee(idDossier, coordonnee));
 
     }
 

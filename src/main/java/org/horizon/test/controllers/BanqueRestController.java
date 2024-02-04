@@ -22,8 +22,8 @@ public class BanqueRestController {
     private BanqueServiceImpl banqueService;
 
     @GetMapping("/banques/list")
-    public ResponseEntity<Page<Banque>> getAllBanques(Integer code, int page, int size) {
-        return ResponseEntity.ok(banqueService.getAllBanques(code, page, size));
+    public ResponseEntity<Page<Banque>> getAllBanques(int page, int size) {
+        return ResponseEntity.ok(banqueService.getAllBanques(page, size));
     }
 
     @GetMapping("/banques/{idBanque}")
@@ -32,10 +32,10 @@ public class BanqueRestController {
     }
 
     @PostMapping("/banques/add")
-    public ResponseEntity<?> addBanque(@Valid @RequestBody Banque banque, BindingResult bindingResult) {
+    public ResponseEntity<?> addBanque(Long idDossier, @Valid @RequestBody Banque banque, BindingResult bindingResult) {
         ResponseEntity<List<String>> BAD_REQUEST = getErrors(bindingResult);
         if (BAD_REQUEST != null) return BAD_REQUEST;
-        return ResponseEntity.ok(banqueService.addBanque(banque));
+        return ResponseEntity.ok(banqueService.addBanque(idDossier, banque));
 
     }
 

@@ -22,8 +22,8 @@ public class EERPlusRestController {
     private EERPlusServiceImpl eerPlusService;
 
     @GetMapping("/eerPluss/list")
-    public ResponseEntity<Page<EERPlus>> getAllEERPluss(String nom, int page, int size) {
-        return ResponseEntity.ok(eerPlusService.getAllEERPluss(nom, page, size));
+    public ResponseEntity<Page<EERPlus>> getAllEERPluss(int page, int size) {
+        return ResponseEntity.ok(eerPlusService.getAllEERPluss(page, size));
     }
 
     @GetMapping("/eerPluss/{idEERPlus}")
@@ -32,10 +32,10 @@ public class EERPlusRestController {
     }
 
     @PostMapping("/eerPluss/add")
-    public ResponseEntity<?> addEERPlus(@Valid @RequestBody EERPlus eerPlus, BindingResult bindingResult) {
+    public ResponseEntity<?> addEERPlus( Long idDossier, @Valid @RequestBody EERPlus eerPlus, BindingResult bindingResult) {
         ResponseEntity<List<String>> BAD_REQUEST = getErrors(bindingResult);
         if (BAD_REQUEST != null) return BAD_REQUEST;
-        return ResponseEntity.ok(eerPlusService.addEERPlus(eerPlus));
+        return ResponseEntity.ok(eerPlusService.addEERPlus(idDossier, eerPlus));
 
     }
 

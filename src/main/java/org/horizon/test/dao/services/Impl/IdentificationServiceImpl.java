@@ -1,7 +1,9 @@
 package org.horizon.test.dao.services.Impl;
 
 import lombok.AllArgsConstructor;
+import org.horizon.test.dao.entities.Dossier;
 import org.horizon.test.dao.entities.Identification;
+import org.horizon.test.dao.repositories.DossierRepository;
 import org.horizon.test.dao.repositories.IdentificationRepository;
 import org.horizon.test.dao.services.IdentificationService;
 import org.springframework.data.domain.Page;
@@ -13,10 +15,11 @@ import org.springframework.stereotype.Service;
 public class IdentificationServiceImpl implements IdentificationService {
 
     private IdentificationRepository identificationRepository;
+    private DossierRepository dossierRepository;
 
     @Override
-    public Page<Identification> getAllIdentifications(String raisonSociale, int page, int size) {
-        return identificationRepository.findIdentificationsByRaisonSocialeContains(raisonSociale, PageRequest.of(page, size));
+    public Page<Identification> getAllIdentifications(int page, int size) {
+        return identificationRepository.findAll(PageRequest.of(page, size));
     }
 
     @Override
@@ -25,7 +28,9 @@ public class IdentificationServiceImpl implements IdentificationService {
     }
 
     @Override
-    public Identification addIdentification(Identification identification) {
+    public Identification addIdentification(Long idDossier, Identification identification) {
+        Dossier dossier = dossierRepository.findById(idDossier).orElse(null);
+        identification.setDossier(dossier);
         return identificationRepository.save(identification);
     }
 

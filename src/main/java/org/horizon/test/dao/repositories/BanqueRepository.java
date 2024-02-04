@@ -9,6 +9,4 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface BanqueRepository extends JpaRepository<Banque, Long> {
 
-    Page<Banque> findBanqueByCodeSiegeContains(Integer codeSiege, Pageable pageable);
-
 }

@@ -10,11 +10,11 @@ import java.math.BigInteger;
 public interface CoordonneeService {
 
 
-    Page<Coordonnee> getAllCoordonnees(BigInteger telFixe, int page, int size);
+    Page<Coordonnee> getAllCoordonnees(int page, int size);
 
     Coordonnee getCoordonnee(Long idCoordonnee);
 
-    Coordonnee addCoordonnee( Coordonnee coordonnee);
+    Coordonnee addCoordonnee( Long idDossier, Coordonnee coordonnee);
 
     Coordonnee updateCoordonnee(Coordonnee coordonnee);
     
