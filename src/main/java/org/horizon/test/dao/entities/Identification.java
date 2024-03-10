@@ -45,7 +45,7 @@ public class Identification {
 
     @NotNull
     @Temporal(TemporalType.DATE)
-    @DateTimeFormat(pattern = "dd-MM-yyyy")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     @FutureOrPresent
     private LocalDate dateCreationActivite;
 
@@ -57,7 +57,7 @@ public class Identification {
 
     @NotNull
     @Temporal(TemporalType.DATE)
-    @DateTimeFormat(pattern = "dd-MM-yyyy")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateInterrogationVigilance;
 
     @NotNull

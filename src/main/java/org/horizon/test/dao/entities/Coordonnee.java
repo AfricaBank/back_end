@@ -31,6 +31,10 @@ public class Coordonnee {
     private String email;
 
     @NotNull
+    @Size(max = 50)
+    private String adresseFiscale;
+
+    @NotNull
     @Size(max = 35)
     private String localite;
 

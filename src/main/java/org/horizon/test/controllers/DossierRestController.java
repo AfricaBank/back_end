@@ -22,8 +22,8 @@ public class DossierRestController {
     private DossierServiceImpl dossierService;
 
     @GetMapping("/dossiers/list")
-    public ResponseEntity<Page<Dossier>> getAllDossiers(String nom, int page, int size) {
-        return ResponseEntity.ok(dossierService.getAllDossiers(nom, page, size));
+    public ResponseEntity<Page<Dossier>> getAllDossiers(String codeExploitant, int page, int size) {
+        return ResponseEntity.ok(dossierService.getAllDossiers(codeExploitant, page, size));
     }
 
     @GetMapping("/dossiers/{idDossier}")
