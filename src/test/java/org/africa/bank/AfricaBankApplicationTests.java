@@ -1,10 +1,10 @@
-package org.horizon.test;
+package org.africa.bank;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class TestApplicationTests {
+class AfricaBankApplicationTests {
 
 	@Test
 	void contextLoads() {
