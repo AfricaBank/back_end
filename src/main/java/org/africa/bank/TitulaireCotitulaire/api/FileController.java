@@ -1,10 +1,10 @@
-package org.africa.bank.api;
+package org.africa.bank.TitulaireCotitulaire.api;
 
 
-import org.africa.bank.dao.entity.FileDB;
-import org.africa.bank.dao.service.FileStorageService;
-import org.africa.bank.message.ResponseFile;
-import org.africa.bank.message.ResponseMessage;
+import org.africa.bank.TitulaireCotitulaire.dao.entity.FileDB;
+import org.africa.bank.TitulaireCotitulaire.dao.service.FileStorageService;
+import org.africa.bank.TitulaireCotitulaire.message.ResponseFile;
+import org.africa.bank.TitulaireCotitulaire.message.ResponseMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;

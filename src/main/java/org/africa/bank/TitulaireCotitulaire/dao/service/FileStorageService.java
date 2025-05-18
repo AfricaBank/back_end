@@ -1,8 +1,8 @@
-package org.africa.bank.dao.service;
+package org.africa.bank.TitulaireCotitulaire.dao.service;
 
 
-import org.africa.bank.dao.entity.FileDB;
-import org.africa.bank.dao.repository.FileDBRepository;
+import org.africa.bank.TitulaireCotitulaire.dao.entity.FileDB;
+import org.africa.bank.TitulaireCotitulaire.dao.repository.FileDBRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;

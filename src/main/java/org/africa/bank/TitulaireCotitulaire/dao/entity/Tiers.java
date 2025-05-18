@@ -1,4 +1,4 @@
-package org.africa.bank.dao.entity;
+package org.africa.bank.TitulaireCotitulaire.dao.entity;
 
 
 import jakarta.persistence.*;
