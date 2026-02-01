@@ -1,0 +1,80 @@
+package org.africa.bank.dto;
+
+import lombok.Data;
+import java.util.Date;
+
+@Data
+public class PersonneLPhysiqueDTO {
+    private Long id;
+    private String typePersonne;
+    private String civilite;
+    private String sexe;
+    private String nomFamille;
+    private String prenom;
+    private String nomAbrege;
+    private String nationalityPays;
+    private String doubleNationalityPays;
+    private Boolean residentUs;
+    private String typeDocumentIdentification;
+    private String numeroDocument;
+    private String paysEmissionDocument;
+    private String nin;
+    private String categorieClientele;
+    private Date dateEER;
+    private String modalite;
+    private Date motifEER;
+    private Date dateDeNaissance;
+    private String lieuNaissance;
+    private String paysNaissance;
+    private String nomMere;
+    private String prenomPere;
+    private String prenomMere;
+    private Boolean naissancePresumee;
+    private String situationFamiliale;
+    private String regimeMatrimoniale;
+    private String nomMarital;
+    private Integer numTelephone;
+    private String adresseFiscale;
+    private Integer codePostal;
+    private Integer localite;
+    private String pays;
+    private Boolean statutResidence;
+    private String wilaya;
+    private String commune;
+    private String categorieClienteleM;
+    private String categorieSocioProfessionnelle;
+    private Boolean connaissanceInterne;
+    private Boolean dirigeantBE;
+    private Boolean beSociete;
+    private Boolean detentionCompteTitre;
+    private Boolean delegationKYC;
+    private Boolean presenceFlux;
+    private String secteurActiviteEconomique;
+    private String libelleAPE;
+    private Date dateCreationActivite;
+    private String principalPaysActivite;
+    private String activiteRisque;
+    private String indicateurProfessionnel;
+    private Integer codeSectoriel;
+    private Integer avoirsControles;
+    private String libelle;
+    private Integer pourcentage;
+    private Integer pourcentageDetection;
+    private String detectionPPE;
+    private String commentaire;
+    private String typePPE;
+    private Boolean ppeLocale;
+    private Date dateIdentification;
+    private Date dateInterrogationVigilance;
+    private Boolean sousSanction;
+    private String idNational;
+    private Integer codeSiege;
+    private Integer racine;
+    private String segmentClientele;
+    private String enfantEnCharge;
+
+    // Références
+    private Long dossierEERId;
+    private Long tiersReferenceId;
+    private String typeRelation;
+}
