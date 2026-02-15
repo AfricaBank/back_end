@@ -1,5 +1,7 @@
 package org.africa.bank.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -12,6 +14,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Data
 @Table(name = "personnes_morales")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class PersonneLM {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -94,11 +97,12 @@ public class PersonneLM {
     private String codeSegmentClientele;
 
 
-    @ManyToOne
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dossier_id")
-    private DossierEER dossierEER;  // or dossier, dossierEer, etc.
+    private DossierEER dossierEER;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tiers_id")
-    private Tiers tiers; // Si la personne morale est liée à un Tiers spécifique
+    private Tiers tiers;
 }

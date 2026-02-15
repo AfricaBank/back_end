@@ -24,6 +24,13 @@ public class TiersServiceImpl implements TiersService {
     @Autowired
     private ModelMapper modelMapper;
 
+
+    @Override
+    @Transactional
+    public Tiers saveOrUpdate(Tiers tiers) {
+        return tiersRepository.save(tiers);
+    }
+
     @Override
     public TiersDTO createTiers(TiersDTO tiersDTO) {
         // Validation des doublons

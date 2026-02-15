@@ -10,6 +10,8 @@ import java.util.Map;
 public interface TiersService {
 
     // CRUD basique
+    Tiers saveOrUpdate(Tiers tiers);
+
     TiersDTO createTiers(TiersDTO tiersDTO);
     TiersDTO updateTiers(Long id, TiersDTO tiersDTO);
     void deleteTiers(Long id);

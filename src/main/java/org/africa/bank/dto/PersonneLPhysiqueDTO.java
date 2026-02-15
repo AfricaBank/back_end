@@ -2,6 +2,7 @@ package org.africa.bank.dto;
 
 import lombok.Data;
 import java.util.Date;
+import java.time.LocalDate;
 
 @Data
 public class PersonneLPhysiqueDTO {
@@ -23,7 +24,7 @@ public class PersonneLPhysiqueDTO {
     private Date dateEER;
     private String modalite;
     private Date motifEER;
-    private Date dateDeNaissance;
+    private LocalDate dateDeNaissance;
     private String lieuNaissance;
     private String paysNaissance;
     private String nomMere;
@@ -33,7 +34,7 @@ public class PersonneLPhysiqueDTO {
     private String situationFamiliale;
     private String regimeMatrimoniale;
     private String nomMarital;
-    private Integer numTelephone;
+    private String numTelephone;
     private String adresseFiscale;
     private Integer codePostal;
     private Integer localite;

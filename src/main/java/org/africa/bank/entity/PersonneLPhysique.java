@@ -1,14 +1,18 @@
 package org.africa.bank.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
+import java.time.LocalDate;
 
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name= "personnes_physiques") // Convention : minuscules et pluriel
+@Table(name= "personnes_physiques")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class PersonneLPhysique {
 
     @Id
@@ -49,13 +53,13 @@ public class PersonneLPhysique {
     private String categorieClientele;
 
     @Temporal(TemporalType.DATE)
-    private Date dateEER;
+    private LocalDate dateEER;
 
     private String modalite;
     private String motifEER; // Changé de Date à String (un motif est un texte)
 
     @Temporal(TemporalType.DATE)
-    private Date datedeNaissance;
+    private LocalDate datedeNaissance;
 
     private String lieuNaissance;
     private String paysNaissance;
@@ -75,6 +79,7 @@ public class PersonneLPhysique {
     /* =========================
        Coordonnées & Adresse
     ========================= */
+    @Column(name = "num_telephone")
     private String numTelephone; // Changé int -> String pour garder le 0 initial
     private String adresseFiscale;
     private String codePostal;   // Changé int -> String
@@ -99,7 +104,7 @@ public class PersonneLPhysique {
     private String libelleAPE;
 
     @Temporal(TemporalType.DATE)
-    private Date dateCreationActivite;
+    private LocalDate dateCreationActivite;
 
     private String principalPaysActivite;
     private String activiteRisque;
@@ -119,10 +124,10 @@ public class PersonneLPhysique {
     private Boolean ppeLocale;
 
     @Temporal(TemporalType.DATE)
-    private Date dateIdentification;
+    private LocalDate dateIdentification;
 
     @Temporal(TemporalType.DATE)
-    private Date dateInterrogationVigilance;
+    private LocalDate dateInterrogationVigilance;
 
     private Boolean sousSanction;
 
@@ -137,11 +142,12 @@ public class PersonneLPhysique {
     /* =========================
        Relations (Jointures)
     ========================= */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "dossier_id")
     private DossierEER dossierEER;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "tiers_id")
     private Tiers tiers;
 }

@@ -1,17 +1,27 @@
 package org.africa.bank.entity;
 
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-
 @Entity
 @Table(name = "tiers")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonIgnoreProperties({
+        "hibernateLazyInitializer",
+        "handler",
+        "accounts",
+        "personnes"
+})
 public class Tiers {
 
     @Id
@@ -32,7 +42,9 @@ public class Tiers {
     private String prenom;
     private String nomAbrege;
 
+    @Temporal(TemporalType.DATE)
     private Date dateNaissance;
+
     private String lieuNaissance;
     private String paysNaissance;
 
@@ -60,13 +72,18 @@ public class Tiers {
     /* =========================
        Légal / KYC
     ========================= */
+    @Temporal(TemporalType.DATE)
     private Date dateEer;
+
     private String motifEer;
     private String modaliteEer;
     private String paysKyc;
 
     private String capaciteJuridique;
+
+    @Temporal(TemporalType.DATE)
     private Date dateEffet;
+
     private String segmentSecuriteFinanciere;
 
     /* =========================
@@ -76,6 +93,8 @@ public class Tiers {
     private String secteurActiviteEconomique;
     private String activiteRisque;
     private String descriptionActivite;
+
+    @Temporal(TemporalType.DATE)
     private Date dateCreationActivite;
 
     private String paysActivite;
@@ -88,6 +107,8 @@ public class Tiers {
     ========================= */
     private String nomEmployeur;
     private Boolean domiciliationSalaire;
+
+    @Temporal(TemporalType.DATE)
     private Date depuisQuand;
 
     /* =========================
@@ -102,6 +123,8 @@ public class Tiers {
 
     private String paysAdresseFiscale;
     private String statutResidence;
+
+    @Temporal(TemporalType.DATE)
     private Date dateEntreeTerritoire;
 
     /* =========================
@@ -111,12 +134,14 @@ public class Tiers {
     private String commentaireRelation;
 
     /* =========================
-       Relations
+       Relations (Lazy par défaut)
     ========================= */
 
+    @JsonIgnore // Empêche la récursion et les erreurs de proxy sur les comptes
     @OneToMany(mappedBy = "tiers", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CompteBancaire> accounts = new ArrayList<>();
 
+    @JsonIgnore // Empêche la récursion et les erreurs de proxy sur les personnes liées
     @OneToMany(mappedBy = "tiers", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PersonneEnCharge> personnes = new ArrayList<>();
 }
