@@ -1,13 +1,19 @@
 package org.africa.bank.dto;
 
 import lombok.Data;
-import java.util.Date;
 import java.time.LocalDate;
 
+/**
+ * DTO PersonneLPhysique — corrections :
+ *  - motifEER : Date → String
+ *  - codePostal / localite : Integer → String
+ *  - codeSiege : Integer → String
+ */
 @Data
 public class PersonneLPhysiqueDTO {
     private Long id;
     private String typePersonne;
+    private String typeRelation;
     private String civilite;
     private String sexe;
     private String nomFamille;
@@ -21,9 +27,9 @@ public class PersonneLPhysiqueDTO {
     private String paysEmissionDocument;
     private String nin;
     private String categorieClientele;
-    private Date dateEER;
+    private LocalDate dateEER;
     private String modalite;
-    private Date motifEER;
+    private String motifEER;            // CORRECTION : String (pas Date)
     private LocalDate dateDeNaissance;
     private String lieuNaissance;
     private String paysNaissance;
@@ -34,10 +40,11 @@ public class PersonneLPhysiqueDTO {
     private String situationFamiliale;
     private String regimeMatrimoniale;
     private String nomMarital;
+    private String enfantEnCharge;
     private String numTelephone;
     private String adresseFiscale;
-    private Integer codePostal;
-    private Integer localite;
+    private String codePostal;          // CORRECTION : String (pas Integer)
+    private String localite;            // CORRECTION : String (pas Integer)
     private String pays;
     private Boolean statutResidence;
     private String wilaya;
@@ -52,11 +59,11 @@ public class PersonneLPhysiqueDTO {
     private Boolean presenceFlux;
     private String secteurActiviteEconomique;
     private String libelleAPE;
-    private Date dateCreationActivite;
+    private LocalDate dateCreationActivite;
     private String principalPaysActivite;
     private String activiteRisque;
     private String indicateurProfessionnel;
-    private Integer codeSectoriel;
+    private String codeSectoriel;
     private Integer avoirsControles;
     private String libelle;
     private Integer pourcentage;
@@ -65,17 +72,16 @@ public class PersonneLPhysiqueDTO {
     private String commentaire;
     private String typePPE;
     private Boolean ppeLocale;
-    private Date dateIdentification;
-    private Date dateInterrogationVigilance;
+    private LocalDate dateIdentification;
+    private LocalDate dateInterrogationVigilance;
     private Boolean sousSanction;
     private String idNational;
-    private Integer codeSiege;
-    private Integer racine;
+    private String codeSiege;           // CORRECTION : String (pas Integer)
+    private Long racine;
     private String segmentClientele;
-    private String enfantEnCharge;
 
     // Références
     private Long dossierEERId;
     private Long tiersReferenceId;
-    private String typeRelation;
 }
+ 

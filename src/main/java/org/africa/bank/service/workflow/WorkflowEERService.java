@@ -2,57 +2,58 @@ package org.africa.bank.service.workflow;
 
 import org.africa.bank.constants.EtapeProcessus;
 import org.africa.bank.constants.StatutDossier;
-import org.africa.bank.dto.PersonneLMDTO;
-import org.africa.bank.dto.PersonneLPhysiqueDTO;
-import org.africa.bank.dto.TiersDTO;
+import org.africa.bank.dto.*;
 import org.africa.bank.entity.*;
+import org.africa.bank.exception.ResourceNotFoundException;
+import org.africa.bank.exception.WorkflowException;
 import org.africa.bank.repository.DossierEERRepository;
 import org.africa.bank.repository.TiersRepository;
-import org.africa.bank.service.DossierNumberService;
-import org.africa.bank.service.PersonneLMService;
-import org.africa.bank.service.PersonneLPhysiqueService;
-import org.africa.bank.service.TiersService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.africa.bank.service.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
-@Transactional
 public class WorkflowEERService {
 
-    @Autowired
-    private DossierEERRepository dossierRepository;
+    private final DossierEERRepository dossierRepository;
+    private final TiersRepository tiersRepository;
+    private final TiersService tiersService;
+    private final PersonneLPhysiqueService personnePhysiqueService;
+    private final PersonneLMService personneLMService;
+    private final DossierNumberService dossierNumberService;
+    private final PieceJustificativeService pjService;
+    private final CRConseillerService crService;
 
-    @Autowired
-    private TiersRepository tiersRepository;
+    public WorkflowEERService(
+            DossierEERRepository dossierRepository,
+            TiersRepository tiersRepository,
+            TiersService tiersService,
+            PersonneLPhysiqueService personnePhysiqueService,
+            PersonneLMService personneLMService,
+            DossierNumberService dossierNumberService,
+            PieceJustificativeService pjService,
+            CRConseillerService crService) {
+        this.dossierRepository       = dossierRepository;
+        this.tiersRepository         = tiersRepository;
+        this.tiersService            = tiersService;
+        this.personnePhysiqueService = personnePhysiqueService;
+        this.personneLMService       = personneLMService;
+        this.dossierNumberService    = dossierNumberService;
+        this.pjService               = pjService;
+        this.crService               = crService;
+    }
 
-    @Autowired
-    private TiersService tiersService;
-
-    @Autowired
-    private PersonneLPhysiqueService personnePhysiqueService;
-
-    @Autowired
-    private PersonneLMService personneLMService;
-
-    @Autowired
-    private DossierNumberService dossierNumberService;
-
-    /**
-     * ÉTAPE 1 & 2 : Initialisation
-     */
+    @Transactional
     public DossierEER initierDossier(Map<String, Object> params) {
         DossierEER dossier = new DossierEER();
         dossier.setReferenceDossier(dossierNumberService.generateReference());
         dossier.setStatut(StatutDossier.EN_COURS);
         dossier.setEtapeActuelle(EtapeProcessus.RECHERCHE_PERSONNE);
         dossier.setDateCreation(LocalDateTime.now());
-
         dossier.setCreateur((String) params.getOrDefault("createur", "SYSTEM"));
         dossier.setTypePersonne((String) params.get("typePersonne"));
         dossier.setCodeSiege((String) params.get("codeSiege"));
@@ -61,23 +62,30 @@ public class WorkflowEERService {
         dossier.setNomExploitant((String) params.get("nomExploitant"));
         dossier.setCiviliteCollectivite((String) params.get("civiliteCollectivite"));
         dossier.setNomCollectivite((String) params.get("nomCollectivite"));
-
-        return forceInitialize(dossierRepository.save(dossier));
+        DossierEER saved = dossierRepository.save(dossier);
+        ajouterHistorique(saved, "Dossier initialisé — référence : " + saved.getReferenceDossier());
+        return dossierRepository.save(saved);
     }
 
-    /**
-     * ÉTAPE 3 : Ajout Titulaire
-     */
+    @Transactional
+    public DossierEER selectionnerTiersExistant(Long dossierId, Long tiersId) {
+        DossierEER dossier = getDossierOuErreur(dossierId);
+        Tiers tiers = tiersRepository.findById(tiersId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tiers", tiersId));
+        dossier.setTitulairePrincipal(tiers);
+        dossier.setEtapeActuelle(EtapeProcessus.AJOUT_TITULAIRE);
+        ajouterHistorique(dossier, "Tiers sélectionné : " + tiers.getNom());
+        return dossierRepository.save(dossier);
+    }
+
+    @Transactional
     public DossierEER ajouterTitulaire(Long dossierId, TiersDTO tiersDTO, boolean estCoTitulaire) {
-        DossierEER dossier = dossierRepository.findById(dossierId)
-                .orElseThrow(() -> new RuntimeException("Dossier introuvable"));
-
+        DossierEER dossier = getDossierOuErreur(dossierId);
         Tiers tiers = (tiersDTO.getId() != null)
-                ? tiersRepository.findById(tiersDTO.getId()).orElseThrow()
+                ? tiersRepository.findById(tiersDTO.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Tiers", tiersDTO.getId()))
                 : tiersRepository.save(tiersService.convertToEntity(tiersDTO));
-
         validerUniciteRole(dossier, tiers, estCoTitulaire);
-
         if (estCoTitulaire) {
             if (!dossier.getCoTitulaires().contains(tiers)) {
                 dossier.getCoTitulaires().add(tiers);
@@ -85,127 +93,114 @@ public class WorkflowEERService {
             }
         } else {
             dossier.setTitulairePrincipal(tiers);
-            ajouterHistorique(dossier, "Titulaire principal défini : " + tiers.getNom());
+            ajouterHistorique(dossier, "Titulaire principal : " + tiers.getNom());
         }
-
         dossier.setEtapeActuelle(EtapeProcessus.AJOUT_PERSONNES_LIEES);
-        return forceInitialize(dossierRepository.save(dossier));
+        return dossierRepository.save(dossier);
     }
 
-    /**
-     * ÉTAPE 4 : Ajout PLP
-     */
+    @Transactional
     public DossierEER ajouterLienPhysique(Long dossierId, PersonneLPhysiqueDTO dto) {
-        DossierEER dossier = dossierRepository.findById(dossierId).orElseThrow();
-
+        DossierEER dossier = getDossierOuErreur(dossierId);
+        if (dossier.getTitulairePrincipal() == null && dossier.getCoTitulaires().isEmpty()) {
+            throw new WorkflowException("Un titulaire doit être défini avant d'ajouter des personnes liées.");
+        }
         Tiers tiers = (dto.getTiersReferenceId() != null)
-                ? tiersRepository.findById(dto.getTiersReferenceId()).orElseThrow()
+                ? tiersRepository.findById(dto.getTiersReferenceId())
+                .orElseThrow(() -> new ResourceNotFoundException("Tiers", dto.getTiersReferenceId()))
                 : tiersRepository.save(tiersService.convertToEntity(mapperTiersDepuisPlp(dto)));
-
         PersonneLPhysique plp = personnePhysiqueService.convertToEntity(dto);
         plp.setTiers(tiers);
         plp.setDossierEER(dossier);
-
+        if (plp.getTypeRelation() == null && dto.getTypeRelation() != null) {
+            plp.setTypeRelation(dto.getTypeRelation());
+        }
         dossier.getPersonnesPhysiques().add(plp);
-        ajouterHistorique(dossier, "Personne liée physique ajoutée : " + tiers.getNom());
-
-        return forceInitialize(dossierRepository.save(dossier));
+        ajouterHistorique(dossier, "PLP ajoutée (" + dto.getTypeRelation() + ") : " + tiers.getNom());
+        return dossierRepository.save(dossier);
     }
 
-    /**
-     * ÉTAPE 4 : Ajout PLM
-     */
+    @Transactional
     public DossierEER ajouterLienMoral(Long dossierId, PersonneLMDTO dto) {
-        DossierEER dossier = dossierRepository.findById(dossierId).orElseThrow();
-
+        DossierEER dossier = getDossierOuErreur(dossierId);
+        if (dossier.getTitulairePrincipal() == null && dossier.getCoTitulaires().isEmpty()) {
+            throw new WorkflowException("Un titulaire doit être défini avant d'ajouter des personnes liées.");
+        }
         Tiers tiers = (dto.getTiersReferenceId() != null)
-                ? tiersRepository.findById(dto.getTiersReferenceId()).orElseThrow()
+                ? tiersRepository.findById(dto.getTiersReferenceId())
+                .orElseThrow(() -> new ResourceNotFoundException("Tiers", dto.getTiersReferenceId()))
                 : tiersRepository.save(tiersService.convertToEntity(mapperTiersDepuisPlm(dto)));
-
         PersonneLM plm = personneLMService.convertToEntity(dto);
         plm.setTiers(tiers);
         plm.setDossierEER(dossier);
-
         dossier.getPersonnesMorales().add(plm);
-        ajouterHistorique(dossier, "Personne liée morale ajoutée : " + tiers.getNom());
-
-        return forceInitialize(dossierRepository.save(dossier));
+        ajouterHistorique(dossier, "PLM ajoutée (GARANT_PM) : " + tiers.getNom());
+        return dossierRepository.save(dossier);
     }
 
-    /**
-     * ÉTAPE FINALE
-     */
-    public DossierEER finaliserDossier(Long dossierId) {
-        DossierEER dossier = dossierRepository.findById(dossierId).orElseThrow();
-        if (dossier.getTitulairePrincipal() == null) {
-            throw new RuntimeException("Un titulaire principal est requis.");
+    @Transactional
+    public DossierEER confirmerPJCompletes(Long dossierId) {
+        DossierEER dossier = getDossierOuErreur(dossierId);
+        if (!pjService.toutesLesPJObligatoiresSontAttachees(dossierId)) {
+            String libelles = pjService.getPJObligatoiresNonAttachees(dossierId)
+                    .stream().map(PieceJustificativeDTO::getLibelle)
+                    .collect(Collectors.joining(", "));
+            throw new WorkflowException("PJ obligatoires manquantes : " + libelles);
         }
-        dossier.setEtapeActuelle(EtapeProcessus.TERMINE);
+        dossier.setEtapeActuelle(EtapeProcessus.CR_CONSEILLER);
+        ajouterHistorique(dossier, "PJ complètes.");
+        return dossierRepository.save(dossier);
+    }
+
+    @Transactional
+    public DossierEER finaliserDossier(Long dossierId) {
+        DossierEER dossier = getDossierOuErreur(dossierId);
+        if (dossier.getTitulairePrincipal() == null) {
+            throw new WorkflowException("Titulaire principal requis.");
+        }
+        if (!pjService.toutesLesPJObligatoiresSontAttachees(dossierId)) {
+            String libelles = pjService.getPJObligatoiresNonAttachees(dossierId)
+                    .stream().map(PieceJustificativeDTO::getLibelle)
+                    .collect(Collectors.joining(", "));
+            throw new WorkflowException("PJ obligatoires manquantes : " + libelles);
+        }
+        if (!crService.crEstRenseigne(dossierId)) {
+            throw new WorkflowException("CR entretien requis.");
+        }
+        dossier.setEtapeActuelle(EtapeProcessus.SOUMISSION_VALIDATION);
         dossier.setStatut(StatutDossier.VALIDE);
         dossier.setDateTerminaison(LocalDateTime.now());
-        ajouterHistorique(dossier, "Dossier finalisé avec succès.");
-
-        return forceInitialize(dossierRepository.save(dossier));
+        ajouterHistorique(dossier, "Dossier soumis.");
+        return dossierRepository.save(dossier);
     }
 
-    /**
-     * MÉTHODES DE RÉCUPÉRATION (Celles qui manquaient !)
-     */
     @Transactional(readOnly = true)
     public DossierEER getDossierById(Long id) {
-        return forceInitialize(dossierRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Dossier introuvable")));
+        return getDossierOuErreur(id);
     }
 
     @Transactional(readOnly = true)
     public Map<String, Object> getStatutWorkflow(Long dossierId) {
-        DossierEER dossier = dossierRepository.findById(dossierId)
-                .orElseThrow(() -> new RuntimeException("Dossier introuvable"));
-
+        DossierEER dossier = getDossierOuErreur(dossierId);
         Map<String, Object> statut = new HashMap<>();
-        statut.put("dossierId", dossier.getId());
-        statut.put("reference", dossier.getReferenceDossier());
-        statut.put("etapeActuelle", dossier.getEtapeActuelle());
-        statut.put("statut", dossier.getStatut());
-        statut.put("createur", dossier.getCreateur());
-        statut.put("dateCreation", dossier.getDateCreation());
+        statut.put("dossierId",             dossier.getId());
+        statut.put("reference",             dossier.getReferenceDossier());
+        statut.put("etapeActuelle",         dossier.getEtapeActuelle());
+        statut.put("statut",                dossier.getStatut());
+        statut.put("createur",              dossier.getCreateur());
+        statut.put("dateCreation",          dossier.getDateCreation());
         statut.put("hasTitulairePrincipal", dossier.getTitulairePrincipal() != null);
-        statut.put("nbCoTitulaires", dossier.getCoTitulaires().size());
-        statut.put("nbPersonnesPhysiques", dossier.getPersonnesPhysiques().size());
-        statut.put("nbPersonnesMorales", dossier.getPersonnesMorales().size());
-
+        statut.put("nbCoTitulaires",        dossier.getCoTitulaires().size());
+        statut.put("nbPersonnesPhysiques",  dossier.getPersonnesPhysiques().size());
+        statut.put("nbPersonnesMorales",    dossier.getPersonnesMorales().size());
+        statut.put("pjCompletes",           pjService.toutesLesPJObligatoiresSontAttachees(dossierId));
+        statut.put("crRenseigne",           crService.crEstRenseigne(dossierId));
         return statut;
     }
 
-    // --- UTILITAIRES ---
-
-    private DossierEER forceInitialize(DossierEER dossier) {
-        if (dossier == null) return null;
-
-        // 1. Charger le Titulaire Principal et ses propres listes Lazy
-        if (dossier.getTitulairePrincipal() != null) {
-            dossier.getTitulairePrincipal().getNom(); // Charge le tiers
-            if (dossier.getTitulairePrincipal().getAccounts() != null) {
-                dossier.getTitulairePrincipal().getAccounts().size(); // <--- AJOUTÉ ICI
-            }
-            if (dossier.getTitulairePrincipal().getPersonnes() != null) {
-                dossier.getTitulairePrincipal().getPersonnes().size(); // <--- AJOUTÉ ICI
-            }
-        }
-
-        // 2. Charger les Co-titulaires et leurs listes
-        if (dossier.getCoTitulaires() != null) {
-            dossier.getCoTitulaires().forEach(ct -> {
-                if (ct.getAccounts() != null) ct.getAccounts().size();
-            });
-        }
-
-        // 3. Charger les autres collections du Dossier
-        if (dossier.getPersonnesPhysiques() != null) dossier.getPersonnesPhysiques().size();
-        if (dossier.getPersonnesMorales() != null) dossier.getPersonnesMorales().size();
-        if (dossier.getHistoriqueEtapes() != null) dossier.getHistoriqueEtapes().size();
-
-        return dossier;
+    private DossierEER getDossierOuErreur(Long id) {
+        return dossierRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dossier EER", id));
     }
 
     private void ajouterHistorique(DossierEER dossier, String message) {
@@ -219,9 +214,14 @@ public class WorkflowEERService {
         dossier.getHistoriqueEtapes().add(h);
     }
 
-    private void validerUniciteRole(DossierEER dossier, Tiers tiers, boolean estAjoutCoTitulaire) {
-        if (estAjoutCoTitulaire && dossier.getTitulairePrincipal() != null && dossier.getTitulairePrincipal().getId().equals(tiers.getId())) {
-            throw new RuntimeException("Le tiers est déjà titulaire principal.");
+    private void validerUniciteRole(DossierEER dossier, Tiers tiers, boolean estCoTitulaire) {
+        if (estCoTitulaire && dossier.getTitulairePrincipal() != null
+                && dossier.getTitulairePrincipal().getId().equals(tiers.getId())) {
+            throw new WorkflowException("Ce tiers est déjà titulaire principal.");
+        }
+        if (!estCoTitulaire && dossier.getCoTitulaires().stream()
+                .anyMatch(ct -> ct.getId().equals(tiers.getId()))) {
+            throw new WorkflowException("Ce tiers est déjà co-titulaire.");
         }
     }
 

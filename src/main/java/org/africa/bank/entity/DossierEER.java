@@ -74,6 +74,16 @@ public class DossierEER {
     private String nomExploitant;
     private String civiliteCollectivite;
 
+    // Pièces justificatives
+    @JsonManagedReference
+    @OneToMany(mappedBy = "dossierEER", cascade = CascadeType.ALL)
+    private List<PieceJustificative> piecesJustificatives = new ArrayList<>();
+
+    // CR Conseiller (1 seul par dossier)
+    @JsonManagedReference
+    @OneToOne(mappedBy = "dossierEER", cascade = CascadeType.ALL)
+    private CRConseiller crConseiller;
+
     public boolean aUnTitulaire() {
         return titulairePrincipal != null || !coTitulaires.isEmpty();
     }

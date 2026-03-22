@@ -1,14 +1,15 @@
 package org.africa.bank.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
-import org.springframework.format.annotation.DateTimeFormat;
-
 import java.time.LocalDate;
 
+/**
+ * Personne liée morale (Garant PM).
+ * Correction : @Digits retiré du champ String telFixe.
+ */
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,14 +18,14 @@ import java.time.LocalDate;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class PersonneLM {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idPLM;
 
-    //  Dossier
-    @Size(min = 5, max = 5)
+    @Column(length = 5)
     private String codeExploitant;
 
-    //  Identification
+    // ── Identification ────────────────────────────────────────────────────────
     @Size(max = 35)
     private String raisonSociale;
 
@@ -35,30 +36,20 @@ public class PersonneLM {
     private String enseigne;
 
     private String formeJuridique;
-
     private String paysImmatriculation;
 
     @Size(max = 35)
     private String localite_id;
 
-    @Temporal(TemporalType.DATE)
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
-    @FutureOrPresent
     private LocalDate dateCreationActivite;
-
     private Boolean detentionPartPorteurAnonyme;
-
     private Boolean societeDomiciliation;
-
-    @Temporal(TemporalType.DATE)
-    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateInterrogationVigilance;
-
     private Boolean sousSanction;
 
-
-    //  Coordonnees
-    @Digits( integer = 20, fraction = 0)
+    // ── Coordonnées ───────────────────────────────────────────────────────────
+    @Column(length = 20)
+    // CORRECTION : @Digits retiré — @Digits ne s'applique pas aux String
     private String telFixe;
 
     @Size(max = 20)
@@ -73,36 +64,30 @@ public class PersonneLM {
 
     private String paysAdresseFiscale;
 
-
-    //  EER
-    @Temporal(TemporalType.DATE)
-    @DateTimeFormat(pattern = "dd-MM-yyyy")
-    @FutureOrPresent
+    // ── EER ───────────────────────────────────────────────────────────────────
     private LocalDate dateEER;
-
     private String motifEER;
-
     private String modaliteEER;
 
-
-    //  Banque
+    // ── Relation bancaire ─────────────────────────────────────────────────────
+    @Column(length = 13)
     private String idNational;
 
-    @Digits(fraction = 0, integer = 5)
+    @Column(length = 5)
     private Integer codeSiege;
 
-    private Long racine;    // value  = new Date().getTime();
-
-
+    private Long racine;
     private String codeSegmentClientele;
 
-
+    // ── Relations JPA ─────────────────────────────────────────────────────────
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dossier_id")
     private DossierEER dossierEER;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "tiers_id")
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+    @JsonIdentityReference(alwaysAsId = true)
     private Tiers tiers;
 }

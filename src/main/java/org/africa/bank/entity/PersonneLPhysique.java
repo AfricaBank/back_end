@@ -1,17 +1,19 @@
 package org.africa.bank.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import lombok.*;
-import java.util.Date;
 import java.time.LocalDate;
 
+/**
+ * Personne liée physique (Mandataire, Garant PP, Représentant Légal).
+ * Correction : suppression des @Temporal sur LocalDate (incompatible).
+ */
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name= "personnes_physiques")
+@Table(name = "personnes_physiques")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class PersonneLPhysique {
 
@@ -20,78 +22,84 @@ public class PersonneLPhysique {
     private Long id;
 
     private String typePersonne;
+    private String typeRelation;   // MANDATAIRE | GARANT_PP | REPRESENTANT_LEGAL
 
-    // Champ requis par votre Repository (findByTypeRelation)
-    private String typeRelation;
-
-    /* =========================
-       Identification & État Civil
-    ========================= */
+    // ── État civil ───────────────────────────────────────────────────────────
     private String civilite;
     private String sexe;
 
-    @Column(name = "nom_famille")
-    private String nomFamille; // Corrigé pour correspondre au Repository
+    @Column(name = "nom_famille", length = 50)
+    private String nomFamille;
 
-    @Column(length=50)
+    @Column(length = 50)
     private String prenom;
 
-    @Column(length=50)
+    @Column(length = 25)
     private String nomAbrege;
 
     private String nationalityPays;
     private String doubleNationalityPays;
     private Boolean residentUs;
     private String typeDocumentIdentification;
+
+    @Column(length = 20)
     private String numeroDocument;
+
     private String paysEmissiondocument;
+
+    @Column(length = 18)
     private String nin;
 
-    /* =========================
-       Rubrique EER / KYC
-    ========================= */
+    // ── EER / KYC ────────────────────────────────────────────────────────────
     private String categorieClientele;
-
-    @Temporal(TemporalType.DATE)
     private LocalDate dateEER;
-
     private String modalite;
-    private String motifEER; // Changé de Date à String (un motif est un texte)
+    private String motifEER;        // CORRECTION : String, pas Date
 
-    @Temporal(TemporalType.DATE)
+    // ── Naissance ────────────────────────────────────────────────────────────
     private LocalDate datedeNaissance;
-
     private String lieuNaissance;
     private String paysNaissance;
+
+    @Column(length = 50)
     private String nomMere;
+
+    @Column(length = 35)
     private String prenomPere;
+
+    @Column(length = 50)
     private String prenomMere;
+
     private Boolean naissancePresumee;
 
-    /* =========================
-       Situation Familiale
-    ========================= */
+    // ── Situation familiale ───────────────────────────────────────────────────
     private String situationFamiliale;
     private String regimeMatrimoniale;
+
+    @Column(length = 35)
     private String nomMarital;
+
     private String enfantEnCharge;
 
-    /* =========================
-       Coordonnées & Adresse
-    ========================= */
-    @Column(name = "num_telephone")
-    private String numTelephone; // Changé int -> String pour garder le 0 initial
+    // ── Coordonnées ──────────────────────────────────────────────────────────
+    @Column(name = "num_telephone", length = 20)
+    private String numTelephone;
+
+    @Column(length = 35)
     private String adresseFiscale;
-    private String codePostal;   // Changé int -> String
-    private String localite;     // Changé int -> String
+
+    @Column(length = 12)
+    private String codePostal;      // CORRECTION : String (pas Integer)
+
+    @Column(length = 35)
+    private String localite;        // CORRECTION : String (pas Integer)
+
     private String pays;
-    private Boolean statutResidence; // Corrigé l'accent (résidence -> residence)
+    private Boolean statutResidence;
     private String wilaya;
     private String commune;
 
-    /* =========================
-       Activité Professionnelle
-    ========================= */
+    // ── Activité professionnelle ──────────────────────────────────────────────
     private String categorieClienteleM;
     private String categorieSocioProfessionnelle;
     private Boolean connaissanceInterne;
@@ -102,52 +110,47 @@ public class PersonneLPhysique {
     private Boolean presenceFlux;
     private String secteurActiviteEconomique;
     private String libelleAPE;
-
-    @Temporal(TemporalType.DATE)
     private LocalDate dateCreationActivite;
-
     private String principalPaysActivite;
     private String activiteRisque;
     private String indicateurProfessionnel;
-    private Integer codeSectoriel;
+    private String codeSectoriel;
     private Integer avoirsControles;
     private String libelle;
     private Integer pourcentage;
     private Integer pourcentageDetection;
 
-    /* =========================
-       Conformité & Sanctions
-    ========================= */
+    // ── Conformité ───────────────────────────────────────────────────────────
     private String detectionPPE;
+
+    @Column(length = 250)
     private String commentaire;
+
     private String typePPE;
     private Boolean ppeLocale;
-
-    @Temporal(TemporalType.DATE)
     private LocalDate dateIdentification;
-
-    @Temporal(TemporalType.DATE)
     private LocalDate dateInterrogationVigilance;
-
     private Boolean sousSanction;
 
-    /* =========================
-       Relation Bancaire
-    ========================= */
+    // ── Relation bancaire ────────────────────────────────────────────────────
+    @Column(length = 13)
     private String idNational;
-    private Integer codeSiege;
-    private Integer racine;
+
+    @Column(length = 5)
+    private String codeSiege;       // CORRECTION : String (format bancaire)
+
+    private Long racine;
     private String segmentClientele;
 
-    /* =========================
-       Relations (Jointures)
-    ========================= */
+    // ── Relations JPA ────────────────────────────────────────────────────────
     @JsonBackReference
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dossier_id")
     private DossierEER dossierEER;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "tiers_id")
+    @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+    @JsonIdentityReference(alwaysAsId = true)
     private Tiers tiers;
 }

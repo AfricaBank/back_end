@@ -1,147 +1,148 @@
 package org.africa.bank.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
+/**
+ * Entité Tiers — représente un client (PP ou PM) dans le système.
+ * Toutes les dates utilisent LocalDate (cohérence avec Java 8+).
+ */
 @Entity
 @Table(name = "tiers")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties({
-        "hibernateLazyInitializer",
-        "handler",
-        "accounts",
-        "personnes"
-})
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Tiers {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /* =========================
-       Identification
-    ========================= */
-    private String typeTiers;
+    // ── Identification ────────────────────────────────────────────────────────
+    private String typeTiers;          // PHYSIQUE | MORALE
     private String categorieClient;
     private String matriculeAgent;
 
     private String civilite;
     private String sexe;
 
+    @Column(length = 50)
     private String nom;
+
+    @Column(length = 50)
     private String prenom;
+
+    @Column(length = 25)
     private String nomAbrege;
 
-    @Temporal(TemporalType.DATE)
-    private Date dateNaissance;
-
+    private LocalDate dateNaissance;
     private String lieuNaissance;
     private String paysNaissance;
 
     private String paysNationalite;
     private String paysDoubleNationalite;
 
+    @Column(length = 25)
     private String numeroIdentifiantFiscal;
+
+    @Column(length = 25)
     private String numeroImmatriculation;
+
+    @Column(length = 25)
     private String numeroActeNaissance;
+
     private String paysImmatriculation;
 
-    /* =========================
-       Informations familiales
-    ========================= */
+    // ── Informations familiales ───────────────────────────────────────────────
     private String situationFamille;
     private String regimeMatrimonial;
+
+    @Column(length = 35)
     private String nomMarital;
 
+    @Column(length = 35)
     private String prenomPere;
+
+    @Column(length = 50)
     private String prenomMere;
+
+    @Column(length = 50)
     private String nomJeuneFille;
 
     private Integer nombreEnfantsCharge;
 
-    /* =========================
-       Légal / KYC
-    ========================= */
-    @Temporal(TemporalType.DATE)
-    private Date dateEer;
-
+    // ── KYC / EER ────────────────────────────────────────────────────────────
+    private LocalDate dateEer;
     private String motifEer;
     private String modaliteEer;
     private String paysKyc;
-
     private String capaciteJuridique;
-
-    @Temporal(TemporalType.DATE)
-    private Date dateEffet;
-
+    private LocalDate dateEffet;
     private String segmentSecuriteFinanciere;
 
-    /* =========================
-       Activité professionnelle
-    ========================= */
+    // ── Activité professionnelle ──────────────────────────────────────────────
     private String categorieSocioProfessionnelle;
     private String secteurActiviteEconomique;
     private String activiteRisque;
+
+    @Column(length = 255)
     private String descriptionActivite;
 
-    @Temporal(TemporalType.DATE)
-    private Date dateCreationActivite;
-
+    private LocalDate dateCreationActivite;
     private String paysActivite;
     private Integer pourcentageActivite;
     private Integer cumulePourcentageActivite;
+
+    @Column(length = 500)
     private String commentaireActivite;
 
-    /* =========================
-       Employeur
-    ========================= */
+    // ── Employeur ────────────────────────────────────────────────────────────
+    @Column(length = 32)
     private String nomEmployeur;
+
     private Boolean domiciliationSalaire;
+    private LocalDate depuisQuand;
 
-    @Temporal(TemporalType.DATE)
-    private Date depuisQuand;
-
-    /* =========================
-       Adresse & contact
-    ========================= */
+    // ── Adresse & contact ────────────────────────────────────────────────────
+    @Column(length = 12)
     private String codePostal;
+
     private String ville;
+
+    @Column(length = 35)
     private String adresse;
 
+    @Column(length = 20)
     private String mobile;
+
     private String email;
 
     private String paysAdresseFiscale;
-    private String statutResidence;
+    private String statutResidence;     // RESIDENT | NON_RESIDENT
+    private LocalDate dateEntreeTerritoire;
+    private LocalDate dateSortieTerritoire;
 
-    @Temporal(TemporalType.DATE)
-    private Date dateEntreeTerritoire;
-
-    /* =========================
-       Relation & consentement
-    ========================= */
+    // ── Consentement & relation ───────────────────────────────────────────────
     private String consentementCreditBureau;
+
+    @Column(length = 1500)
     private String commentaireRelation;
 
-    /* =========================
-       Relations (Lazy par défaut)
-    ========================= */
-
-    @JsonIgnore // Empêche la récursion et les erreurs de proxy sur les comptes
+    // ── Relations ────────────────────────────────────────────────────────────
+    @JsonIgnore
     @OneToMany(mappedBy = "tiers", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CompteBancaire> accounts = new ArrayList<>();
 
-    @JsonIgnore // Empêche la récursion et les erreurs de proxy sur les personnes liées
+    @JsonIgnore
     @OneToMany(mappedBy = "tiers", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PersonneEnCharge> personnes = new ArrayList<>();
 }
