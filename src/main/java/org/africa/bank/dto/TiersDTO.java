@@ -4,6 +4,9 @@ import lombok.Data;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * DTO Tiers — toutes les dates en LocalDate (cohérence avec l'entité).
+ */
 @Data
 public class TiersDTO {
     private Long id;
@@ -58,32 +61,10 @@ public class TiersDTO {
     private String paysAdresseFiscale;
     private String statutResidence;
     private LocalDate dateEntreeTerritoire;
+    private LocalDate dateSortieTerritoire;
     private String consentementCreditBureau;
     private String commentaireRelation;
 
-    // Pour la recherche
     private List<CompteBancaireDTO> comptes;
     private List<PersonneEnChargeDTO> personnesEnCharge;
-}
-
-@Data
-class CompteBancaireDTO {
-    private Long id;
-    private String typeCompte;
-    private String devise;
-    private String motifOuverture;
-    private String racine;
-    private String cle;
-    private String cleRib;
-    private String conventionCompte;
-    private String cartonSignature;
-}
-
-@Data
-class PersonneEnChargeDTO {
-    private Long id;
-    private String nom;
-    private String prenom;
-    private LocalDate dateNaissance;
-    private String sexe;
 }
