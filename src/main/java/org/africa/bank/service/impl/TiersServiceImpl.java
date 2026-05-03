@@ -1,168 +1,149 @@
 package org.africa.bank.service.impl;
 
-import jakarta.persistence.criteria.Predicate;
+import org.africa.bank.dto.CompteBancaireDTO;
+import org.africa.bank.dto.PersonneEnChargeDTO;
 import org.africa.bank.dto.TiersDTO;
+import org.africa.bank.entity.CompteBancaire;
+import org.africa.bank.entity.PersonneEnCharge;
 import org.africa.bank.entity.Tiers;
+import org.africa.bank.exception.DuplicateResourceException;
+import org.africa.bank.exception.ResourceNotFoundException;
 import org.africa.bank.repository.TiersRepository;
 import org.africa.bank.service.TiersService;
+import org.africa.bank.specification.TiersSpecification;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class TiersServiceImpl implements TiersService {
 
-    @Autowired
-    private TiersRepository tiersRepository;
+    private final TiersRepository tiersRepository;
+    private final ModelMapper modelMapper;
 
-    @Autowired
-    private ModelMapper modelMapper;
-
+    public TiersServiceImpl(TiersRepository tiersRepository,
+                            ModelMapper modelMapper) {
+        this.tiersRepository = tiersRepository;
+        this.modelMapper     = modelMapper;
+    }
 
     @Override
-    @Transactional
     public Tiers saveOrUpdate(Tiers tiers) {
         return tiersRepository.save(tiers);
     }
 
     @Override
     public TiersDTO createTiers(TiersDTO tiersDTO) {
-        // Validation des doublons
         if (tiersDTO.getEmail() != null && isEmailExists(tiersDTO.getEmail())) {
-            throw new RuntimeException("L'email existe déjà");
+            throw new DuplicateResourceException(
+                    "L'email existe déjà : " + tiersDTO.getEmail());
         }
-
         if (tiersDTO.getMobile() != null && isMobileExists(tiersDTO.getMobile())) {
-            throw new RuntimeException("Le numéro de mobile existe déjà");
+            throw new DuplicateResourceException(
+                    "Le mobile existe déjà : " + tiersDTO.getMobile());
         }
-
-        Tiers tiers = convertToEntity(tiersDTO);
-        tiers = tiersRepository.save(tiers);
-        return convertToDTO(tiers);
+        return convertToDTO(tiersRepository.save(convertToEntity(tiersDTO)));
     }
 
     @Override
     public TiersDTO updateTiers(Long id, TiersDTO tiersDTO) {
-        Tiers existingTiers = tiersRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tiers non trouvé avec l'id: " + id));
-
-        // Mettre à jour les champs
-        modelMapper.map(tiersDTO, existingTiers);
-
-        // Sauvegarder
-        Tiers updatedTiers = tiersRepository.save(existingTiers);
-        return convertToDTO(updatedTiers);
+        Tiers existing = tiersRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tiers", id));
+        modelMapper.map(tiersDTO, existing);
+        // Mettre à jour comptes et personnes en charge si fournis
+        if (tiersDTO.getComptes() != null) {
+            existing.getAccounts().clear();
+            tiersDTO.getComptes().forEach(dto -> {
+                CompteBancaire c = modelMapper.map(dto, CompteBancaire.class);
+                c.setTiers(existing);
+                existing.getAccounts().add(c);
+            });
+        }
+        if (tiersDTO.getPersonnesEnCharge() != null) {
+            existing.getPersonnes().clear();
+            tiersDTO.getPersonnesEnCharge().forEach(dto -> {
+                PersonneEnCharge p = modelMapper.map(dto, PersonneEnCharge.class);
+                p.setTiers(existing);
+                existing.getPersonnes().add(p);
+            });
+        }
+        return convertToDTO(tiersRepository.save(existing));
     }
 
     @Override
     public void deleteTiers(Long id) {
         if (!tiersRepository.existsById(id)) {
-            throw new RuntimeException("Tiers non trouvé avec l'id: " + id);
+            throw new ResourceNotFoundException("Tiers", id);
         }
         tiersRepository.deleteById(id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TiersDTO getTiersById(Long id) {
-        Tiers tiers = tiersRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tiers non trouvé avec l'id: " + id));
-        return convertToDTO(tiers);
+        return convertToDTO(tiersRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Tiers", id)));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<TiersDTO> getAllTiers(Pageable pageable) {
-        return tiersRepository.findAll(pageable)
-                .map(this::convertToDTO);
+        return tiersRepository.findAll(pageable).map(this::convertToDTO);
     }
 
     @Override
-    public List<TiersDTO> searchTiers(Map<String, Object> searchCriteria) {
-        return tiersRepository.findAll((root, query, criteriaBuilder) -> {
-                    List<Predicate> predicates = new ArrayList<>();
-
-                    if (searchCriteria.containsKey("nom")) {
-                        predicates.add(criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("nom")),
-                                "%" + searchCriteria.get("nom").toString().toLowerCase() + "%"
-                        ));
-                    }
-
-                    if (searchCriteria.containsKey("prenom")) {
-                        predicates.add(criteriaBuilder.like(
-                                criteriaBuilder.lower(root.get("prenom")),
-                                "%" + searchCriteria.get("prenom").toString().toLowerCase() + "%"
-                        ));
-                    }
-
-                    if (searchCriteria.containsKey("typeTiers")) {
-                        predicates.add(criteriaBuilder.equal(root.get("typeTiers"), searchCriteria.get("typeTiers")));
-                    }
-
-                    if (searchCriteria.containsKey("dateNaissance")) {
-                        predicates.add(criteriaBuilder.equal(root.get("dateNaissance"), searchCriteria.get("dateNaissance")));
-                    }
-
-                    if (searchCriteria.containsKey("numeroIdentifiantFiscal")) {
-                        predicates.add(criteriaBuilder.equal(root.get("numeroIdentifiantFiscal"),
-                                searchCriteria.get("numeroIdentifiantFiscal")));
-                    }
-
-                    return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-                }).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public List<TiersDTO> searchTiers(Map<String, Object> criteria) {
+        return tiersRepository.findAll(TiersSpecification.avecCriteres(criteria))
+                .stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<TiersDTO> findByNom(String nom) {
         return tiersRepository.findByNomContainingIgnoreCase(nom)
-                .stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<TiersDTO> findByPrenom(String prenom) {
         return tiersRepository.findByPrenomContainingIgnoreCase(prenom)
-                .stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<TiersDTO> findByNomAndPrenom(String nom, String prenom) {
         return tiersRepository.rechercherParNomPrenom(nom, prenom)
-                .stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TiersDTO findByEmail(String email) {
-        return tiersRepository.findByEmail(email)
-                .map(this::convertToDTO)
-                .orElse(null);
+        return tiersRepository.findByEmail(email).map(this::convertToDTO).orElse(null);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TiersDTO findByMobile(String mobile) {
-        return tiersRepository.findByMobile(mobile)
-                .map(this::convertToDTO)
-                .orElse(null);
+        return tiersRepository.findByMobile(mobile).map(this::convertToDTO).orElse(null);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<TiersDTO> findByTypeTiers(String typeTiers) {
         return tiersRepository.findByTypeTiers(typeTiers)
-                .stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Override
@@ -187,24 +168,63 @@ public class TiersServiceImpl implements TiersService {
 
     @Override
     public TiersDTO convertToDTO(Tiers tiers) {
-        return modelMapper.map(tiers, TiersDTO.class);
+        TiersDTO dto = modelMapper.map(tiers, TiersDTO.class);
+
+        // Mapper manuellement les comptes (évite les erreurs de proxy Hibernate)
+        if (tiers.getAccounts() != null) {
+            dto.setComptes(tiers.getAccounts().stream()
+                    .map(c -> modelMapper.map(c, CompteBancaireDTO.class))
+                    .collect(Collectors.toList()));
+        }
+
+        // Mapper manuellement les personnes en charge
+        if (tiers.getPersonnes() != null) {
+            dto.setPersonnesEnCharge(tiers.getPersonnes().stream()
+                    .map(p -> modelMapper.map(p, PersonneEnChargeDTO.class))
+                    .collect(Collectors.toList()));
+        }
+
+        return dto;
     }
 
     @Override
-    public Tiers convertToEntity(TiersDTO tiersDTO) {
-        return modelMapper.map(tiersDTO, Tiers.class);
+    public Tiers convertToEntity(TiersDTO dto) {
+        Tiers tiers = modelMapper.map(dto, Tiers.class);
+
+        // Mapper comptes bancaires avec relation bidirectionnelle
+        if (dto.getComptes() != null && !dto.getComptes().isEmpty()) {
+            List<CompteBancaire> comptes = new ArrayList<>();
+            for (CompteBancaireDTO cDto : dto.getComptes()) {
+                CompteBancaire c = modelMapper.map(cDto, CompteBancaire.class);
+                c.setTiers(tiers);
+                comptes.add(c);
+            }
+            tiers.setAccounts(comptes);
+        }
+
+        // Mapper personnes en charge avec relation bidirectionnelle
+        if (dto.getPersonnesEnCharge() != null
+                && !dto.getPersonnesEnCharge().isEmpty()) {
+            List<PersonneEnCharge> personnes = new ArrayList<>();
+            for (PersonneEnChargeDTO pDto : dto.getPersonnesEnCharge()) {
+                PersonneEnCharge p = modelMapper.map(pDto, PersonneEnCharge.class);
+                p.setTiers(tiers);
+                personnes.add(p);
+            }
+            tiers.setPersonnes(personnes);
+        }
+
+        return tiers;
     }
 
     @Override
     public Tiers getEntityById(Long id) {
         return tiersRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tiers non trouvé avec l'id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Tiers", id));
     }
 
     @Override
     public List<Tiers> searchEntities(Map<String, Object> criteria) {
-        return searchTiers(criteria).stream()
-                .map(this::convertToEntity)
-                .collect(Collectors.toList());
+        return tiersRepository.findAll(TiersSpecification.avecCriteres(criteria));
     }
 }

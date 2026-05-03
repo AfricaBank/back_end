@@ -1,7 +1,7 @@
 package org.africa.bank.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties; // Ajouté
 import jakarta.persistence.*;
 import lombok.Data;
 import org.africa.bank.constants.EtapeProcessus;
@@ -14,9 +14,9 @@ import java.util.List;
 @Entity
 @Table(name = "dossier_eer")
 @Data
-// Evite l'erreur ByteBuddyInterceptor lors de la sérialisation JSON
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class DossierEER {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,34 +30,46 @@ public class DossierEER {
     @Enumerated(EnumType.STRING)
     private EtapeProcessus etapeActuelle;
 
-    // Relation avec le titulaire principal
+    /**
+     * Titulaire principal — EAGER + JsonIgnoreProperties pour éviter
+     * la sérialisation des listes lazy de Tiers (accounts, personnes).
+     */
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "tiers_id")
+    @JsonIgnoreProperties({"accounts", "personnes", "hibernateLazyInitializer", "handler"})
     private Tiers titulairePrincipal;
 
-    // Relations avec les co-titulaires
+    /**
+     * Co-titulaires — même protection.
+     */
     @ManyToMany
     @JoinTable(
             name = "dossier_co_titulaires",
             joinColumns = @JoinColumn(name = "dossier_id"),
             inverseJoinColumns = @JoinColumn(name = "tiers_id")
     )
+    @JsonIgnoreProperties({"accounts", "personnes", "hibernateLazyInitializer", "handler"})
     private List<Tiers> coTitulaires = new ArrayList<>();
 
-    // Personnes physiques liées
-    @JsonManagedReference // Gère le côté "Parent" de la relation
+    @JsonManagedReference
     @OneToMany(mappedBy = "dossierEER", cascade = CascadeType.ALL)
     private List<PersonneLPhysique> personnesPhysiques = new ArrayList<>();
 
-    // Personnes morales liées
-    @JsonManagedReference // Ajouté pour éviter la boucle infinie si PersonneLM a un champ dossierEER
+    @JsonManagedReference
     @OneToMany(mappedBy = "dossierEER", cascade = CascadeType.ALL)
     private List<PersonneLM> personnesMorales = new ArrayList<>();
 
-    // Historique des étapes
-    @JsonManagedReference // Ajouté
+    @JsonManagedReference
     @OneToMany(mappedBy = "dossierEER", cascade = CascadeType.ALL)
     private List<HistoriqueEtape> historiqueEtapes = new ArrayList<>();
+
+    @JsonManagedReference
+    @OneToMany(mappedBy = "dossierEER", cascade = CascadeType.ALL)
+    private List<PieceJustificative> piecesJustificatives = new ArrayList<>();
+
+    @JsonManagedReference
+    @OneToOne(mappedBy = "dossierEER", cascade = CascadeType.ALL)
+    private CRConseiller crConseiller;
 
     private LocalDateTime dateCreation;
     private LocalDateTime dateModification;
@@ -73,16 +85,6 @@ public class DossierEER {
     private String nomCollectivite;
     private String nomExploitant;
     private String civiliteCollectivite;
-
-    // Pièces justificatives
-    @JsonManagedReference
-    @OneToMany(mappedBy = "dossierEER", cascade = CascadeType.ALL)
-    private List<PieceJustificative> piecesJustificatives = new ArrayList<>();
-
-    // CR Conseiller (1 seul par dossier)
-    @JsonManagedReference
-    @OneToOne(mappedBy = "dossierEER", cascade = CascadeType.ALL)
-    private CRConseiller crConseiller;
 
     public boolean aUnTitulaire() {
         return titulairePrincipal != null || !coTitulaires.isEmpty();
