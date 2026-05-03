@@ -11,10 +11,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Entité Tiers — représente un client (PP ou PM) dans le système.
- * Toutes les dates utilisent LocalDate (cohérence avec Java 8+).
- */
 @Entity
 @Table(name = "tiers")
 @Data
@@ -28,10 +24,9 @@ public class Tiers {
     private Long id;
 
     // ── Identification ────────────────────────────────────────────────────────
-    private String typeTiers;          // PHYSIQUE | MORALE
+    private String typeTiers;
     private String categorieClient;
     private String matriculeAgent;
-
     private String civilite;
     private String sexe;
 
@@ -47,7 +42,6 @@ public class Tiers {
     private LocalDate dateNaissance;
     private String lieuNaissance;
     private String paysNaissance;
-
     private String paysNationalite;
     private String paysDoubleNationalite;
 
@@ -80,7 +74,7 @@ public class Tiers {
 
     private Integer nombreEnfantsCharge;
 
-    // ── KYC / EER ────────────────────────────────────────────────────────────
+    // ── EER / KYC ─────────────────────────────────────────────────────────────
     private LocalDate dateEer;
     private String motifEer;
     private String modaliteEer;
@@ -105,14 +99,14 @@ public class Tiers {
     @Column(length = 500)
     private String commentaireActivite;
 
-    // ── Employeur ────────────────────────────────────────────────────────────
+    // ── Employeur ─────────────────────────────────────────────────────────────
     @Column(length = 32)
     private String nomEmployeur;
 
     private Boolean domiciliationSalaire;
     private LocalDate depuisQuand;
 
-    // ── Adresse & contact ────────────────────────────────────────────────────
+    // ── Adresse & contact ─────────────────────────────────────────────────────
     @Column(length = 12)
     private String codePostal;
 
@@ -127,7 +121,7 @@ public class Tiers {
     private String email;
 
     private String paysAdresseFiscale;
-    private String statutResidence;     // RESIDENT | NON_RESIDENT
+    private String statutResidence;
     private LocalDate dateEntreeTerritoire;
     private LocalDate dateSortieTerritoire;
 
@@ -137,12 +131,25 @@ public class Tiers {
     @Column(length = 1500)
     private String commentaireRelation;
 
-    // ── Relations ────────────────────────────────────────────────────────────
+    // ── Relations ─────────────────────────────────────────────────────────────
+
+    /**
+     * CORRECTION : FetchType.EAGER pour éviter LazyInitializationException.
+     * @JsonIgnore empêche la sérialisation JSON directe —
+     * les comptes sont exposés via TiersDTO.comptes à la place.
+     */
     @JsonIgnore
-    @OneToMany(mappedBy = "tiers", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "tiers", cascade = CascadeType.ALL,
+            orphanRemoval = true, fetch = FetchType.EAGER)
     private List<CompteBancaire> accounts = new ArrayList<>();
 
+    /**
+     * CORRECTION : FetchType.EAGER pour éviter LazyInitializationException.
+     * @JsonIgnore empêche la sérialisation JSON directe —
+     * les personnes sont exposées via TiersDTO.personnesEnCharge à la place.
+     */
     @JsonIgnore
-    @OneToMany(mappedBy = "tiers", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "tiers", cascade = CascadeType.ALL,
+            orphanRemoval = true, fetch = FetchType.EAGER)
     private List<PersonneEnCharge> personnes = new ArrayList<>();
 }
