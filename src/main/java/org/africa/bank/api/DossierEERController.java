@@ -3,10 +3,11 @@ package org.africa.bank.api;
 import jakarta.validation.Valid;
 import org.africa.bank.dto.*;
 import org.africa.bank.entity.DossierEER;
-import org.africa.bank.service.CRConseillerService;
-import org.africa.bank.service.PieceJustificativeService;
-import org.africa.bank.service.RecherchePersonneService;
+import org.africa.bank.service.*;
 import org.africa.bank.service.workflow.WorkflowEERService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,23 +21,53 @@ public class DossierEERController {
 
     private final WorkflowEERService workflowService;
     private final RecherchePersonneService rechercheService;
+    private final DossierQueryService dossierQueryService;
     private final PieceJustificativeService pjService;
     private final CRConseillerService crService;
 
     public DossierEERController(
             WorkflowEERService workflowService,
             RecherchePersonneService rechercheService,
+            DossierQueryService dossierQueryService,
             PieceJustificativeService pjService,
             CRConseillerService crService) {
-        this.workflowService  = workflowService;
-        this.rechercheService = rechercheService;
-        this.pjService        = pjService;
-        this.crService        = crService;
+        this.workflowService    = workflowService;
+        this.rechercheService   = rechercheService;
+        this.dossierQueryService = dossierQueryService;
+        this.pjService          = pjService;
+        this.crService          = crService;
+    }
+
+    // ── Liste paginée ─────────────────────────────────────────────────────────
+    @GetMapping
+    public ResponseEntity<Page<DossierEER>> getAllDossiers(
+            @PageableDefault(size = 20, sort = "dateCreation") Pageable pageable) {
+        return ResponseEntity.ok(dossierQueryService.getAllDossiers(pageable));
+    }
+
+    // ── Liste par créateur ────────────────────────────────────────────────────
+    @GetMapping("/createur/{createur}")
+    public ResponseEntity<List<DossierEER>> getDossiersByCreateur(
+            @PathVariable String createur) {
+        return ResponseEntity.ok(dossierQueryService.getDossiersByCreateur(createur));
+    }
+
+    // ── Abandon ───────────────────────────────────────────────────────────────
+    @PostMapping("/{id}/abandonner")
+    public ResponseEntity<DossierEER> abandonner(@PathVariable Long id) {
+        return ResponseEntity.ok(workflowService.abandonnerDossier(id));
+    }
+
+    // ── Reprise ───────────────────────────────────────────────────────────────
+    @PostMapping("/{id}/reprendre")
+    public ResponseEntity<DossierEER> reprendre(@PathVariable Long id) {
+        return ResponseEntity.ok(workflowService.reprendreDossier(id));
     }
 
     // ── Étape 1 : Initialisation ──────────────────────────────────────────────
     @PostMapping("/initier")
-    public ResponseEntity<DossierEER> initier(@RequestBody Map<String, Object> params) {
+    public ResponseEntity<DossierEER> initier(
+            @RequestBody Map<String, Object> params) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(workflowService.initierDossier(params));
     }
@@ -52,7 +83,8 @@ public class DossierEERController {
     public ResponseEntity<DossierEER> selectionnerTiers(
             @PathVariable Long id,
             @PathVariable Long tiersId) {
-        return ResponseEntity.ok(workflowService.selectionnerTiersExistant(id, tiersId));
+        return ResponseEntity.ok(
+                workflowService.selectionnerTiersExistant(id, tiersId));
     }
 
     // ── Étape 3 : Titulaire ───────────────────────────────────────────────────
@@ -90,7 +122,8 @@ public class DossierEERController {
     }
 
     @GetMapping("/{id}/pieces-justificatives")
-    public ResponseEntity<List<PieceJustificativeDTO>> getPJ(@PathVariable Long id) {
+    public ResponseEntity<List<PieceJustificativeDTO>> getPJ(
+            @PathVariable Long id) {
         return ResponseEntity.ok(pjService.getPJParDossier(id));
     }
 
@@ -126,7 +159,7 @@ public class DossierEERController {
         return ResponseEntity.ok(workflowService.finaliserDossier(id));
     }
 
-    // ── Lecture ───────────────────────────────────────────────────────────────
+    // ── Lecture détail ────────────────────────────────────────────────────────
     @GetMapping("/{id}")
     public ResponseEntity<DossierEER> getDossier(@PathVariable Long id) {
         return ResponseEntity.ok(workflowService.getDossierById(id));

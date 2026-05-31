@@ -47,6 +47,47 @@ public class WorkflowEERService {
         this.crService               = crService;
     }
 
+    // =========================================================================
+    // ABANDON / REPRISE
+    // =========================================================================
+
+    @Transactional
+    public DossierEER abandonnerDossier(Long dossierId) {
+        DossierEER dossier = getDossierOuErreur(dossierId);
+
+        if (dossier.getStatut() == StatutDossier.ANNULE) {
+            throw new WorkflowException("Ce dossier est déjà abandonné.");
+        }
+        if (dossier.getStatut() == StatutDossier.VALIDE) {
+            throw new WorkflowException(
+                    "Un dossier validé ne peut pas être abandonné.");
+        }
+
+        dossier.setStatut(StatutDossier.ANNULE);
+        dossier.setDateModification(LocalDateTime.now());
+        ajouterHistorique(dossier, "Dossier abandonné par l'utilisateur.");
+        return dossierRepository.save(dossier);
+    }
+
+    @Transactional
+    public DossierEER reprendreDossier(Long dossierId) {
+        DossierEER dossier = getDossierOuErreur(dossierId);
+
+        if (dossier.getStatut() != StatutDossier.ANNULE) {
+            throw new WorkflowException(
+                    "Seul un dossier abandonné peut être repris.");
+        }
+
+        dossier.setStatut(StatutDossier.EN_COURS);
+        dossier.setDateModification(LocalDateTime.now());
+        ajouterHistorique(dossier, "Dossier repris par l'utilisateur.");
+        return dossierRepository.save(dossier);
+    }
+
+    // =========================================================================
+    // ÉTAPE 1 : Initialisation
+    // =========================================================================
+
     @Transactional
     public DossierEER initierDossier(Map<String, Object> params) {
         DossierEER dossier = new DossierEER();
@@ -62,10 +103,16 @@ public class WorkflowEERService {
         dossier.setNomExploitant((String) params.get("nomExploitant"));
         dossier.setCiviliteCollectivite((String) params.get("civiliteCollectivite"));
         dossier.setNomCollectivite((String) params.get("nomCollectivite"));
+
         DossierEER saved = dossierRepository.save(dossier);
-        ajouterHistorique(saved, "Dossier initialisé — référence : " + saved.getReferenceDossier());
+        ajouterHistorique(saved, "Dossier initialisé — référence : "
+                + saved.getReferenceDossier());
         return dossierRepository.save(saved);
     }
+
+    // =========================================================================
+    // ÉTAPE 2 : Sélection tiers existant
+    // =========================================================================
 
     @Transactional
     public DossierEER selectionnerTiersExistant(Long dossierId, Long tiersId) {
@@ -78,14 +125,22 @@ public class WorkflowEERService {
         return dossierRepository.save(dossier);
     }
 
+    // =========================================================================
+    // ÉTAPE 3 : Titulaire
+    // =========================================================================
+
     @Transactional
-    public DossierEER ajouterTitulaire(Long dossierId, TiersDTO tiersDTO, boolean estCoTitulaire) {
+    public DossierEER ajouterTitulaire(Long dossierId, TiersDTO tiersDTO,
+                                       boolean estCoTitulaire) {
         DossierEER dossier = getDossierOuErreur(dossierId);
         Tiers tiers = (tiersDTO.getId() != null)
                 ? tiersRepository.findById(tiersDTO.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Tiers", tiersDTO.getId()))
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Tiers", tiersDTO.getId()))
                 : tiersRepository.save(tiersService.convertToEntity(tiersDTO));
+
         validerUniciteRole(dossier, tiers, estCoTitulaire);
+
         if (estCoTitulaire) {
             if (!dossier.getCoTitulaires().contains(tiers)) {
                 dossier.getCoTitulaires().add(tiers);
@@ -95,20 +150,32 @@ public class WorkflowEERService {
             dossier.setTitulairePrincipal(tiers);
             ajouterHistorique(dossier, "Titulaire principal : " + tiers.getNom());
         }
+
         dossier.setEtapeActuelle(EtapeProcessus.AJOUT_PERSONNES_LIEES);
+        dossier.setDateModification(LocalDateTime.now());
         return dossierRepository.save(dossier);
     }
 
+    // =========================================================================
+    // ÉTAPE 4 : Personnes liées
+    // =========================================================================
+
     @Transactional
-    public DossierEER ajouterLienPhysique(Long dossierId, PersonneLPhysiqueDTO dto) {
+    public DossierEER ajouterLienPhysique(Long dossierId,
+                                          PersonneLPhysiqueDTO dto) {
         DossierEER dossier = getDossierOuErreur(dossierId);
-        if (dossier.getTitulairePrincipal() == null && dossier.getCoTitulaires().isEmpty()) {
-            throw new WorkflowException("Un titulaire doit être défini avant d'ajouter des personnes liées.");
+        if (dossier.getTitulairePrincipal() == null
+                && dossier.getCoTitulaires().isEmpty()) {
+            throw new WorkflowException(
+                    "Un titulaire doit être défini avant d'ajouter des personnes liées.");
         }
         Tiers tiers = (dto.getTiersReferenceId() != null)
                 ? tiersRepository.findById(dto.getTiersReferenceId())
-                .orElseThrow(() -> new ResourceNotFoundException("Tiers", dto.getTiersReferenceId()))
-                : tiersRepository.save(tiersService.convertToEntity(mapperTiersDepuisPlp(dto)));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Tiers", dto.getTiersReferenceId()))
+                : tiersRepository.save(tiersService.convertToEntity(
+                mapperTiersDepuisPlp(dto)));
+
         PersonneLPhysique plp = personnePhysiqueService.convertToEntity(dto);
         plp.setTiers(tiers);
         plp.setDossierEER(dossier);
@@ -116,27 +183,39 @@ public class WorkflowEERService {
             plp.setTypeRelation(dto.getTypeRelation());
         }
         dossier.getPersonnesPhysiques().add(plp);
-        ajouterHistorique(dossier, "PLP ajoutée (" + dto.getTypeRelation() + ") : " + tiers.getNom());
+        ajouterHistorique(dossier, "PLP ajoutée (" + dto.getTypeRelation()
+                + ") : " + tiers.getNom());
+        dossier.setDateModification(LocalDateTime.now());
         return dossierRepository.save(dossier);
     }
 
     @Transactional
     public DossierEER ajouterLienMoral(Long dossierId, PersonneLMDTO dto) {
         DossierEER dossier = getDossierOuErreur(dossierId);
-        if (dossier.getTitulairePrincipal() == null && dossier.getCoTitulaires().isEmpty()) {
-            throw new WorkflowException("Un titulaire doit être défini avant d'ajouter des personnes liées.");
+        if (dossier.getTitulairePrincipal() == null
+                && dossier.getCoTitulaires().isEmpty()) {
+            throw new WorkflowException(
+                    "Un titulaire doit être défini avant d'ajouter des personnes liées.");
         }
         Tiers tiers = (dto.getTiersReferenceId() != null)
                 ? tiersRepository.findById(dto.getTiersReferenceId())
-                .orElseThrow(() -> new ResourceNotFoundException("Tiers", dto.getTiersReferenceId()))
-                : tiersRepository.save(tiersService.convertToEntity(mapperTiersDepuisPlm(dto)));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Tiers", dto.getTiersReferenceId()))
+                : tiersRepository.save(tiersService.convertToEntity(
+                mapperTiersDepuisPlm(dto)));
+
         PersonneLM plm = personneLMService.convertToEntity(dto);
         plm.setTiers(tiers);
         plm.setDossierEER(dossier);
         dossier.getPersonnesMorales().add(plm);
         ajouterHistorique(dossier, "PLM ajoutée (GARANT_PM) : " + tiers.getNom());
+        dossier.setDateModification(LocalDateTime.now());
         return dossierRepository.save(dossier);
     }
+
+    // =========================================================================
+    // ÉTAPE 5 : PJ
+    // =========================================================================
 
     @Transactional
     public DossierEER confirmerPJCompletes(Long dossierId) {
@@ -151,6 +230,10 @@ public class WorkflowEERService {
         ajouterHistorique(dossier, "PJ complètes.");
         return dossierRepository.save(dossier);
     }
+
+    // =========================================================================
+    // ÉTAPE 7 : Finalisation
+    // =========================================================================
 
     @Transactional
     public DossierEER finaliserDossier(Long dossierId) {
@@ -174,6 +257,10 @@ public class WorkflowEERService {
         return dossierRepository.save(dossier);
     }
 
+    // =========================================================================
+    // LECTURE
+    // =========================================================================
+
     @Transactional(readOnly = true)
     public DossierEER getDossierById(Long id) {
         return getDossierOuErreur(id);
@@ -193,10 +280,16 @@ public class WorkflowEERService {
         statut.put("nbCoTitulaires",        dossier.getCoTitulaires().size());
         statut.put("nbPersonnesPhysiques",  dossier.getPersonnesPhysiques().size());
         statut.put("nbPersonnesMorales",    dossier.getPersonnesMorales().size());
-        statut.put("pjCompletes",           pjService.toutesLesPJObligatoiresSontAttachees(dossierId));
-        statut.put("crRenseigne",           crService.crEstRenseigne(dossierId));
+        statut.put("pjCompletes",
+                pjService.toutesLesPJObligatoiresSontAttachees(dossierId));
+        statut.put("crRenseigne",
+                crService.crEstRenseigne(dossierId));
         return statut;
     }
+
+    // =========================================================================
+    // UTILITAIRES
+    // =========================================================================
 
     private DossierEER getDossierOuErreur(Long id) {
         return dossierRepository.findById(id)
@@ -204,7 +297,8 @@ public class WorkflowEERService {
     }
 
     private void ajouterHistorique(DossierEER dossier, String message) {
-        if (dossier.getHistoriqueEtapes() == null) dossier.setHistoriqueEtapes(new ArrayList<>());
+        if (dossier.getHistoriqueEtapes() == null)
+            dossier.setHistoriqueEtapes(new ArrayList<>());
         HistoriqueEtape h = new HistoriqueEtape();
         h.setDatePassage(LocalDateTime.now());
         h.setCommentaire(message);
@@ -214,7 +308,8 @@ public class WorkflowEERService {
         dossier.getHistoriqueEtapes().add(h);
     }
 
-    private void validerUniciteRole(DossierEER dossier, Tiers tiers, boolean estCoTitulaire) {
+    private void validerUniciteRole(DossierEER dossier, Tiers tiers,
+                                    boolean estCoTitulaire) {
         if (estCoTitulaire && dossier.getTitulairePrincipal() != null
                 && dossier.getTitulairePrincipal().getId().equals(tiers.getId())) {
             throw new WorkflowException("Ce tiers est déjà titulaire principal.");
