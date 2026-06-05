@@ -4,6 +4,7 @@ public enum PermissionName {
     READ,
     WRITE,
     VALIDATE,
-    AUTONOMY
+    AUTONOMY,
+    EXECUTE
 
 }
