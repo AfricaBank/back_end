@@ -8,7 +8,6 @@ import org.africa.bank.entity.Role;
 import org.africa.bank.repository.PermissionRepository;
 import org.africa.bank.repository.RoleRepository;
 import org.africa.bank.service.RoleService;
-
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,12 +24,10 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public RoleResponseDTO createRole(RoleRequestDTO dto) {
 
-        // Vérifier si le rôle existe déjà
-        if (roleRepository.existsByLabel(dto.getLabel())) {
+        if (roleRepository.existsByName(dto.getName())) {
             throw new RuntimeException("Ce rôle existe déjà");
         }
 
-        // Récupérer les permissions depuis la base
         Set<Permission> permissions = dto.getPermissionIds()
                 .stream()
                 .map(permissionId -> permissionRepository.findById(permissionId)
@@ -40,17 +37,15 @@ public class RoleServiceImpl implements RoleService {
                                 )))
                 .collect(Collectors.toSet());
 
-        // Construire le rôle
         Role role = Role.builder()
-                .label(dto.getLabel())
+                .name(dto.getName())
                 .description(dto.getDescription())
+                .status(true)
                 .permissions(permissions)
                 .build();
 
-        // Sauvegarder
         Role savedRole = roleRepository.save(role);
 
-        // Retourner la réponse
         return mapToResponse(savedRole);
     }
 
@@ -89,13 +84,37 @@ public class RoleServiceImpl implements RoleService {
                                 )))
                 .collect(Collectors.toSet());
 
-        role.setLabel(dto.getLabel());
+        role.setName(dto.getName());
         role.setDescription(dto.getDescription());
         role.setPermissions(permissions);
 
         Role updatedRole = roleRepository.save(role);
 
         return mapToResponse(updatedRole);
+    }
+
+    @Override
+    public void activateRole(Long id) {
+
+        Role role = roleRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Rôle introuvable"));
+
+        role.setStatus(true);
+
+        roleRepository.save(role);
+    }
+
+    @Override
+    public void deactivateRole(Long id) {
+
+        Role role = roleRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Rôle introuvable"));
+
+        role.setStatus(false);
+
+        roleRepository.save(role);
     }
 
     @Override
@@ -112,12 +131,15 @@ public class RoleServiceImpl implements RoleService {
 
         return RoleResponseDTO.builder()
                 .id(role.getId())
-                .label(role.getLabel())
+                .name(role.getName())
                 .description(role.getDescription())
+                .status(role.getStatus())
+                .createdAt(role.getCreatedAt())
+                .permissionCount(role.getPermissions().size())
                 .permissions(
                         role.getPermissions()
                                 .stream()
-                                .map(permission -> permission.getName().name())
+                                .map(Permission::getCode)
                                 .collect(Collectors.toSet())
                 )
                 .build();

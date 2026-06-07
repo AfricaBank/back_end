@@ -1,11 +1,10 @@
 package org.africa.bank.config;
 
 import lombok.RequiredArgsConstructor;
-import org.africa.bank.constants.PermissionName;
+import org.africa.bank.entity.Permission;
 import org.africa.bank.repository.PermissionRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-import org.africa.bank.entity.Permission;
 
 @Component
 @RequiredArgsConstructor
@@ -16,14 +15,40 @@ public class PermissionSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) {
 
-        for (PermissionName permissionName : PermissionName.values()) {
+        createPermission(
+                "READ",
+                "Lecture des données"
+        );
 
-            permissionRepository.findByName(permissionName)
-                    .orElseGet(() -> permissionRepository.save(
-                            Permission.builder()
-                                    .name(permissionName)
-                                    .build()
-                    ));
-        }
+        createPermission(
+                "WRITE",
+                "Modification des données"
+        );
+
+        createPermission(
+                "VALIDATE",
+                "Validation des opérations"
+        );
+
+        createPermission(
+                "AUTONOMY",
+                "Autonomie complète"
+        );
+    }
+
+    private void createPermission(
+            String code,
+            String description
+    ) {
+
+        permissionRepository.findByCode(code)
+                .orElseGet(() ->
+                        permissionRepository.save(
+                                Permission.builder()
+                                        .code(code)
+                                        .description(description)
+                                        .build()
+                        )
+                );
     }
 }

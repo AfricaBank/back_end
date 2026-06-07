@@ -5,7 +5,7 @@ import java.util.Set;
 @Data
 public class RoleRequestDTO {
 
-    private String label;
+    private String name;
 
     private String description;
 
