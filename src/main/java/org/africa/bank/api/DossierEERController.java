@@ -4,7 +4,7 @@ import jakarta.validation.Valid;
 import org.africa.bank.dto.*;
 import org.africa.bank.entity.DossierEER;
 import org.africa.bank.service.*;
-import org.africa.bank.service.workflow.WorkflowEERService;
+import org.africa.bank.service.workflow.IWorkflowEERService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -19,14 +19,14 @@ import java.util.Map;
 @RequestMapping("/api/v1/dossiers-eer")
 public class DossierEERController {
 
-    private final WorkflowEERService workflowService;
+    private final IWorkflowEERService workflowService;
     private final RecherchePersonneService rechercheService;
     private final DossierQueryService dossierQueryService;
     private final PieceJustificativeService pjService;
     private final CRConseillerService crService;
 
     public DossierEERController(
-            WorkflowEERService workflowService,
+            IWorkflowEERService  workflowService,
             RecherchePersonneService rechercheService,
             DossierQueryService dossierQueryService,
             PieceJustificativeService pjService,
@@ -36,6 +36,8 @@ public class DossierEERController {
         this.dossierQueryService = dossierQueryService;
         this.pjService          = pjService;
         this.crService          = crService;
+
+
     }
 
     // ── Liste paginée ─────────────────────────────────────────────────────────
@@ -45,7 +47,6 @@ public class DossierEERController {
         return ResponseEntity.ok(dossierQueryService.getAllDossiers(pageable));
     }
 
-    // ── Liste par créateur ────────────────────────────────────────────────────
     @GetMapping("/createur/{createur}")
     public ResponseEntity<List<DossierEER>> getDossiersByCreateur(
             @PathVariable String createur) {
