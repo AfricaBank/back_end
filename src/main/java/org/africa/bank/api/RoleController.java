@@ -1,7 +1,5 @@
 package org.africa.bank.api;
 
-
-
 import lombok.RequiredArgsConstructor;
 import org.africa.bank.dto.RoleRequestDTO;
 import org.africa.bank.dto.RoleResponseDTO;
@@ -40,6 +38,18 @@ public class RoleController {
             @RequestBody RoleRequestDTO dto
     ) {
         return roleService.updateRole(id, dto);
+    }
+
+    @PatchMapping("/{id}/activate")
+    @ResponseStatus(HttpStatus.OK)
+    public void activateRole(@PathVariable Long id) {
+        roleService.activateRole(id);
+    }
+
+    @PatchMapping("/{id}/deactivate")
+    @ResponseStatus(HttpStatus.OK)
+    public void deactivateRole(@PathVariable Long id) {
+        roleService.deactivateRole(id);
     }
 
     @DeleteMapping("/{id}")

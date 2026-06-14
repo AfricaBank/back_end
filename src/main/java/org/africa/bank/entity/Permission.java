@@ -1,18 +1,24 @@
 package org.africa.bank.entity;
-
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.africa.bank.constants.PermissionName;
+import lombok.*;
+
 
 @Entity
-@Data @AllArgsConstructor @NoArgsConstructor @Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Getter
+@Setter
+@Table(name = "permissions")
 public class Permission {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Enumerated(EnumType.STRING)
-    @Column(unique = true, nullable = false)
-    private PermissionName name;
+
+    @Column(nullable = false, unique = true)
+    private String code;
+
+    private String description;
 }
