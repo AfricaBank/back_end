@@ -10,14 +10,13 @@ import org.africa.bank.repository.DossierEERRepository;
 import org.africa.bank.repository.TiersRepository;
 import org.africa.bank.service.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class WorkflowEERService {
+public class WorkflowEERService implements IWorkflowEERService {
 
     private final DossierEERRepository dossierRepository;
     private final TiersRepository tiersRepository;
@@ -28,6 +27,7 @@ public class WorkflowEERService {
     private final PieceJustificativeService pjService;
     private final CRConseillerService crService;
 
+
     public WorkflowEERService(
             DossierEERRepository dossierRepository,
             TiersRepository tiersRepository,
@@ -36,7 +36,7 @@ public class WorkflowEERService {
             PersonneLMService personneLMService,
             DossierNumberService dossierNumberService,
             PieceJustificativeService pjService,
-            CRConseillerService crService) {
+            CRConseillerService crService, WorkflowTransactionHelper txHelper) {
         this.dossierRepository       = dossierRepository;
         this.tiersRepository         = tiersRepository;
         this.tiersService            = tiersService;
@@ -45,13 +45,14 @@ public class WorkflowEERService {
         this.dossierNumberService    = dossierNumberService;
         this.pjService               = pjService;
         this.crService               = crService;
+
     }
 
     // =========================================================================
     // ABANDON / REPRISE
     // =========================================================================
 
-    @Transactional
+
     public DossierEER abandonnerDossier(Long dossierId) {
         DossierEER dossier = getDossierOuErreur(dossierId);
 
@@ -69,7 +70,7 @@ public class WorkflowEERService {
         return dossierRepository.save(dossier);
     }
 
-    @Transactional
+
     public DossierEER reprendreDossier(Long dossierId) {
         DossierEER dossier = getDossierOuErreur(dossierId);
 
@@ -88,7 +89,7 @@ public class WorkflowEERService {
     // ÉTAPE 1 : Initialisation
     // =========================================================================
 
-    @Transactional
+
     public DossierEER initierDossier(Map<String, Object> params) {
         DossierEER dossier = new DossierEER();
         dossier.setReferenceDossier(dossierNumberService.generateReference());
@@ -114,7 +115,7 @@ public class WorkflowEERService {
     // ÉTAPE 2 : Sélection tiers existant
     // =========================================================================
 
-    @Transactional
+
     public DossierEER selectionnerTiersExistant(Long dossierId, Long tiersId) {
         DossierEER dossier = getDossierOuErreur(dossierId);
         Tiers tiers = tiersRepository.findById(tiersId)
@@ -129,7 +130,7 @@ public class WorkflowEERService {
     // ÉTAPE 3 : Titulaire
     // =========================================================================
 
-    @Transactional
+
     public DossierEER ajouterTitulaire(Long dossierId, TiersDTO tiersDTO,
                                        boolean estCoTitulaire) {
         DossierEER dossier = getDossierOuErreur(dossierId);
@@ -160,7 +161,7 @@ public class WorkflowEERService {
     // ÉTAPE 4 : Personnes liées
     // =========================================================================
 
-    @Transactional
+
     public DossierEER ajouterLienPhysique(Long dossierId,
                                           PersonneLPhysiqueDTO dto) {
         DossierEER dossier = getDossierOuErreur(dossierId);
@@ -189,7 +190,7 @@ public class WorkflowEERService {
         return dossierRepository.save(dossier);
     }
 
-    @Transactional
+
     public DossierEER ajouterLienMoral(Long dossierId, PersonneLMDTO dto) {
         DossierEER dossier = getDossierOuErreur(dossierId);
         if (dossier.getTitulairePrincipal() == null
@@ -217,7 +218,7 @@ public class WorkflowEERService {
     // ÉTAPE 5 : PJ
     // =========================================================================
 
-    @Transactional
+
     public DossierEER confirmerPJCompletes(Long dossierId) {
         DossierEER dossier = getDossierOuErreur(dossierId);
         if (!pjService.toutesLesPJObligatoiresSontAttachees(dossierId)) {
@@ -235,7 +236,7 @@ public class WorkflowEERService {
     // ÉTAPE 7 : Finalisation
     // =========================================================================
 
-    @Transactional
+
     public DossierEER finaliserDossier(Long dossierId) {
         DossierEER dossier = getDossierOuErreur(dossierId);
         if (dossier.getTitulairePrincipal() == null) {
@@ -261,12 +262,12 @@ public class WorkflowEERService {
     // LECTURE
     // =========================================================================
 
-    @Transactional(readOnly = true)
+
     public DossierEER getDossierById(Long id) {
         return getDossierOuErreur(id);
     }
 
-    @Transactional(readOnly = true)
+
     public Map<String, Object> getStatutWorkflow(Long dossierId) {
         DossierEER dossier = getDossierOuErreur(dossierId);
         Map<String, Object> statut = new HashMap<>();
@@ -334,4 +335,5 @@ public class WorkflowEERService {
         t.setTypeTiers("MORALE");
         return t;
     }
+
 }
