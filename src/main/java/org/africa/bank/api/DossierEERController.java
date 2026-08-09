@@ -24,20 +24,20 @@ public class DossierEERController {
     private final DossierQueryService dossierQueryService;
     private final PieceJustificativeService pjService;
     private final CRConseillerService crService;
+    private final AvisDecisionService avisDecisionService;
 
     public DossierEERController(
             IWorkflowEERService  workflowService,
             RecherchePersonneService rechercheService,
             DossierQueryService dossierQueryService,
             PieceJustificativeService pjService,
-            CRConseillerService crService) {
+            CRConseillerService crService, AvisDecisionService avisDecisionService) {
         this.workflowService    = workflowService;
         this.rechercheService   = rechercheService;
         this.dossierQueryService = dossierQueryService;
         this.pjService          = pjService;
         this.crService          = crService;
-
-
+        this.avisDecisionService = avisDecisionService;
     }
 
     // ── Liste paginée ─────────────────────────────────────────────────────────
@@ -169,5 +169,20 @@ public class DossierEERController {
     @GetMapping("/{id}/statut")
     public ResponseEntity<Map<String, Object>> getStatut(@PathVariable Long id) {
         return ResponseEntity.ok(workflowService.getStatutWorkflow(id));
+    }
+
+    @PostMapping("/{id}/avis-decision")
+    public ResponseEntity<AvisDecisionDTO> soumettreAvis(
+            @PathVariable Long id,
+            @RequestBody AvisDecisionDTO dto) {
+        return ResponseEntity.ok(avisDecisionService.soumettreAvis(id, dto));
+    }
+
+    @GetMapping("/{id}/avis-decision")
+    public ResponseEntity<AvisDecisionDTO> getAvis(@PathVariable Long id) {
+        AvisDecisionDTO avis = avisDecisionService.getAvisParDossier(id);
+        return avis != null
+                ? ResponseEntity.ok(avis)
+                : ResponseEntity.noContent().build();
     }
 }

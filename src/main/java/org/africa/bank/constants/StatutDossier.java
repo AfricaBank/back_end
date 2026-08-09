@@ -9,6 +9,7 @@ public enum StatutDossier {
     COMPLET,
     ANNULE,
     VALIDE,
+    REJETE,
 
     // Statuts de régularisation (retour vers le commercial)
     A_COMPLETER_CONFORMITE,   // Retour de la conformité locale
@@ -18,4 +19,5 @@ public enum StatutDossier {
     A_REGULARISER_BO_CN1,     // Retour du BO CN1
     A_REGULARISER_SIGNATURE,  // Retour du BO N2 pour signature
     A_ABANDONNER_RESAISIE     // BOCN1 : processus erroné → abandon obligatoire
+    ;
 }

@@ -21,25 +21,26 @@ public class PieceJustificativeServiceImpl implements PieceJustificativeService 
     private final PieceJustificativeRepository pjRepository;
     private final DossierEERRepository dossierRepository;
     private final ModelMapper modelMapper;
+    private final PieceJustificativeQueryService queryService;
 
     public PieceJustificativeServiceImpl(
             PieceJustificativeRepository pjRepository,
             DossierEERRepository dossierRepository,
-            ModelMapper modelMapper) {
+            ModelMapper modelMapper,
+            PieceJustificativeQueryService queryService) {
         this.pjRepository = pjRepository;
         this.dossierRepository = dossierRepository;
         this.modelMapper = modelMapper;
+        this.queryService = queryService;
     }
 
     @Override
     public PieceJustificativeDTO attacherPJ(Long dossierId, PieceJustificativeDTO dto) {
         DossierEER dossier = dossierRepository.findById(dossierId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dossier EER", dossierId));
-
         PieceJustificative pj = modelMapper.map(dto, PieceJustificative.class);
         pj.setDossierEER(dossier);
         pj.setAttache(true);
-
         return modelMapper.map(pjRepository.save(pj), PieceJustificativeDTO.class);
     }
 
@@ -59,27 +60,19 @@ public class PieceJustificativeServiceImpl implements PieceJustificativeService 
         pjRepository.deleteById(pjId);
     }
 
+    // Délégation vers le service de lecture
     @Override
-    @Transactional(readOnly = true)
     public List<PieceJustificativeDTO> getPJParDossier(Long dossierId) {
-        return pjRepository.findByDossierEERId(dossierId)
-                .stream()
-                .map(pj -> modelMapper.map(pj, PieceJustificativeDTO.class))
-                .collect(Collectors.toList());
+        return queryService.getPJParDossier(dossierId);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<PieceJustificativeDTO> getPJObligatoiresNonAttachees(Long dossierId) {
-        return pjRepository.findPJObligatoiresNonAttachees(dossierId)
-                .stream()
-                .map(pj -> modelMapper.map(pj, PieceJustificativeDTO.class))
-                .collect(Collectors.toList());
+        return queryService.getPJObligatoiresNonAttachees(dossierId);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public boolean toutesLesPJObligatoiresSontAttachees(Long dossierId) {
-        return pjRepository.toutesLesPJObligatoiresSontAttachees(dossierId);
+        return queryService.toutesLesPJObligatoiresSontAttachees(dossierId);
     }
 }
