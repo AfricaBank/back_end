@@ -2,6 +2,7 @@ package org.africa.bank.api;
 
 
 import org.africa.bank.entity.FileDB;
+import org.africa.bank.message.ResponseUpload;
 import org.africa.bank.service.FileStorageService;
 import org.africa.bank.message.ResponseFile;
 import org.africa.bank.message.ResponseMessage;
@@ -27,16 +28,18 @@ public class FileController {
     private FileStorageService storageService;
 
     @PostMapping("/upload")
-    public ResponseEntity<ResponseMessage> uploadFile(@RequestParam("file") MultipartFile file) {
-        String message = "";
+    public ResponseEntity<ResponseUpload> uploadFile(@RequestParam("file") MultipartFile file) {
         try {
-            storageService.store(file);
-
-            message = "Téléchargement avec succé: " + file.getOriginalFilename();
-            return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessage(message));
+            FileDB saved = storageService.store(file); // store() doit retourner FileDB
+            return ResponseEntity.ok(new ResponseUpload(
+                    saved.getId(),
+                    file.getOriginalFilename(),
+                    "Fichier uploadé avec succès"
+            ));
         } catch (Exception e) {
-            message = "Le fichier ne peut pas télécharger: " + file.getOriginalFilename() + "!";
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new ResponseMessage(message));
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED)
+                    .body(new ResponseUpload(null, file.getOriginalFilename(),
+                            "Échec de l'upload : " + e.getMessage()));
         }
     }
 

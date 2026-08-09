@@ -6,13 +6,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-/**
- * Configuration CORS centralisée.
- * Autorise les appels depuis le front React (Vite dev server).
- *
- * NOTE : En production, remplacer "http://localhost:5173"
- * par l'URL réelle du front déployé.
- */
 @Configuration
 public class CorsConfig {
 
@@ -42,6 +35,8 @@ public class CorsConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/**", config);
+        source.registerCorsConfiguration("/upload", config);
+        source.registerCorsConfiguration("/files/**", config);
 
         return new CorsFilter(source);
     }

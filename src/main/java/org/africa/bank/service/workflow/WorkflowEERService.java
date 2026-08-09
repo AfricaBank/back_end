@@ -227,8 +227,9 @@ public class WorkflowEERService implements IWorkflowEERService {
                     .collect(Collectors.joining(", "));
             throw new WorkflowException("PJ obligatoires manquantes : " + libelles);
         }
-        dossier.setEtapeActuelle(EtapeProcessus.CR_CONSEILLER);
-        ajouterHistorique(dossier, "PJ complètes.");
+        // CR_CONSEILLER supprimé — on passe directement à SOUMISSION_VALIDATION
+        dossier.setEtapeActuelle(EtapeProcessus.SOUMISSION_VALIDATION);
+        ajouterHistorique(dossier, "PJ complètes — dossier soumis à validation.");
         return dossierRepository.save(dossier);
     }
 
